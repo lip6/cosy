@@ -1,0 +1,22 @@
+#!/bin/bash
+# Convert breakid generator file format in saucy format
+# Copyright 2017 Hakan Metin - All rights reserved
+
+if [ $# != 1 ]; then
+    echo "No file"
+    exit 1
+fi
+
+if [ -s $1 ]; then
+    sed -i -r -e 's/\( /\(/g' \
+	-e '1 i\[' \
+	-e 's/ \)/\)/g' \
+	-e 's/ /,/g' \
+	-e 's/\),\(/\)\(/g' \
+	-e '$ s/.$//' \
+	-e "\$a]" \
+	-e '/^\s*$/d' $1
+else
+    echo '['
+    echo ']'
+fi

@@ -1,0 +1,50 @@
+# Compile anfd launch solvers
+
+## Files
+
+launcher/           <- Store symmetry computer tools
+launcher/bliss/     <- Store bliss symmetry computer tools
+launcher/saucy/     <- Store saucy symmetry computer tools
+glucose-3.0/        <- glucose-3.0 with cosy integrated
+minisat/            <- minisat with cosy integrated
+
+
+## Compile Glucose-3.0
+
+
+Execute following commands:
+
+```
+cd glucose-3.0/core/
+export MROOT=..
+export LIBRARY_PATH='path_of_cosy_lib'
+make
+```
+
+## Compile minisat
+
+Execute following commands
+
+```
+cd glucose-3.0/core/
+export MROOT=..
+export LIBRARY_PATH='path_of_cosy_lib'
+make
+```
+
+## Compute symmetries and launch solver
+
+With Bliss:
+
+```
+./launcher/bliss/launch.sh path_of_solver path_of_cnf_instance
+
+```
+
+
+With Bliss:
+
+```
+./launcher/saucy/launch.sh path_of_solver path_of_cnf_instance
+
+```

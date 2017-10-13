@@ -1,0 +1,7 @@
+#!/bin/bash
+# Convert a bliss generator file in saucy format
+# Copyright 2017 Hakan Metin - All rights reserved
+
+echo "["
+sed -r -e '$ ! s/^Generator: (.*)/\1,/' -e '$ s/^Generator: (.*)/\1/' $1
+echo "]"
