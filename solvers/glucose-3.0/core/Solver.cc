@@ -902,6 +902,26 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
+        if (confl == CRef_Undef && qhead == trail.size() &&
+            symmetry != nullptr) {
+            while (symmetry->canForceLexLeader()) {
+		Lit propagate;
+		vec<Lit> reason;
+                std::vector<Lit> r;
+
+                r = symmetry->generateForceLexLeaderEsbp(&propagate);
+
+                for (Lit l : r)
+                    reason.push(l);
+
+		if (value(propagate) != l_Undef)
+		    continue;
+		CRef cr = ca.alloc(reason, true);
+		learnts.push(cr);
+		attachClause(cr);
+ 		uncheckedEnqueue(propagate, cr);
+	    }
+	}
     }
     propagations += num_props;
     simpDB_props -= num_props;
@@ -1235,7 +1255,8 @@ lbool Solver::solve_()
 
     // Set symmetry order
     if (symmetry != nullptr) {
-        symmetry->order(cosy::OrderType::OCCURENCE);
+        // symmetry->activateLexLeaderForcing();
+        symmetry->order(cosy::OrderType::OCCURENCE, cosy::T_LESS_F);
         symmetry->printInfo();
     }
     solves++;

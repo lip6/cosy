@@ -14,6 +14,7 @@
 #include "cosy/Parser.h"
 #include "cosy/ParserSaucy.h"
 #include "cosy/LiteralAdapter.h"
+#include "cosy/LexOrder.h"
 #include "cosy/Printer.h"
 #include "cosy/CNFParser.h"
 
@@ -26,11 +27,11 @@ class SymmetryController {
                     const std::unique_ptr<LiteralAdapter<T>>& literal_adapter);
         ~SymmetryController();
 
-        void initialize(const std::string cnf_file,
+        bool initialize(const std::string cnf_file,
                         const std::string symmetry_file);
 
-        void order(const std::vector<T>& order);
-        void order(OrderType type);
+        void order(const std::vector<T>& order, LexType lex);
+        void order(OrderType order, LexType lex);
 
         void updateNotify(T lit, unsigned int level);
         void updateCancel(T lit);
@@ -69,11 +70,14 @@ inline SymmetryController<T>::~SymmetryController() {
 
 /* Initialisation */
 template<class T>
-inline void SymmetryController<T>::initialize(const std::string cnf_file,
+inline bool SymmetryController<T>::initialize(const std::string cnf_file,
                                            const std::string symmetry_file) {
     std::unique_ptr<Parser> sym_parser = nullptr;
     std::vector< std::unique_ptr<Permutation> > permutations;
     CNFParser cnf_parser;
+
+    if (symmetry_file.empty())
+        return false;
 
     _model = cnf_parser.parse(cnf_file);
 
@@ -87,11 +91,13 @@ inline void SymmetryController<T>::initialize(const std::string cnf_file,
 
     for (std::unique_ptr<Permutation>& permutation : permutations)
         _manager->addPermutation(std::move(permutation));
+
+    return _manager->numGenerators() > 0;
 }
 
 /* Configuration */
 template<class T>
-inline void SymmetryController<T>::order(const std::vector<T>& order) {
+inline void SymmetryController<T>::order(const std::vector<T>& order, LexType lex) {
     std::vector<Lit> cosy_order;
     cosy::Lit lit;
 
@@ -102,13 +108,13 @@ inline void SymmetryController<T>::order(const std::vector<T>& order) {
     _order_manager->custom(cosy_order);
 
     /* TODO : put lex order type in parameter */
-    _manager->order(cosy_order, T_LESS_F);
+    _manager->order(cosy_order, lex);
 }
 
 template<class T>
-inline void SymmetryController<T>::order(OrderType type) {
-    _order_manager->generate(type);
-    _manager->order(_order_manager->order(), T_LESS_F);
+inline void SymmetryController<T>::order(OrderType order, LexType lex) {
+    _order_manager->generate(order);
+    _manager->order(_order_manager->order(), lex);
 }
 
 /* Solve API */
@@ -167,7 +173,7 @@ inline bool SymmetryController<T>::canForceLexLeader() {
 }
 
 template<class T>
-inline std::vector<T> SymmetryController<T>::generateForceLexLeaderEsbp(T* propagate) {
+inline std::vector<T> SymmetryController<T>::generateForceLexLeaderEsbpg(T* propagate) {
     cosy::Lit l;
     std::vector<cosy::Lit> r;
     T lit;

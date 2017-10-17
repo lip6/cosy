@@ -203,11 +203,9 @@ int main(int argc, char** argv)
         std::string symmetry_file = std::string(sym_file);
         std::string cnf_file = std::string(argv[1]);
 
-	if (!symmetry_file.empty()) {
-            S.symmetry->initialize(cnf_file, symmetry_file);
-	} else {
-	    S.symmetry = nullptr;
-	}
+        if (!S.symmetry->initialize(cnf_file, symmetry_file))
+            S.symmetry = nullptr;
+
         vec<Lit> dummy;
         lbool ret = S.solveLimited(dummy);
         if (S.verbosity > 0){

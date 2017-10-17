@@ -176,10 +176,8 @@ int main(int argc, char** argv)
         std::string symmetry_file = std::string(sym_file);
         std::string cnf_file = std::string(argv[1]);
 
-	if (!symmetry_file.empty())
-            S.symmetry->initialize(cnf_file, symmetry_file);
-	else
-    	    S.symmetry = nullptr;
+        if (!S.symmetry->initialize(cnf_file, symmetry_file))
+            S.symmetry = nullptr;
 
         vec<Lit> dummy;
         lbool ret = S.solveLimited(dummy);
@@ -187,7 +185,7 @@ int main(int argc, char** argv)
             printStats(S);
             printf("\n"); }
         // printf(ret == l_True ? "SATISFIABLE\n" : ret == l_False ? "UNSATISFIABLE\n" : "INDETERMINATE\n");
-	res = stdout;
+        res = stdout;
         if (res != NULL){
             if (ret == l_True){
                 fprintf(res, "SATISFIABLE\nv ");

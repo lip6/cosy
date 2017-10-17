@@ -156,7 +156,7 @@ inline void OrderManager::class_occurence_order() {
     for (unsigned int i = 0; i < orbits.size(); i++) {
         orbits_order.push_back(i);
         // Sort with the highest occurence of each orbit
-        // TODO(hakan): maybe test also with sum of occurences in orbit
+        // TODO(user): maybe test also with sum of occurences in orbit
         orbits_occurence.push_back(_occurences[orbits[i][0]]);
     }
     std::sort(orbits_order.begin(), orbits_order.end(),

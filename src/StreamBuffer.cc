@@ -26,7 +26,7 @@ StreamBuffer::~StreamBuffer() {
     }
 }
 
-bool StreamBuffer::ok() const {
+bool StreamBuffer::valid() const {
     return _in != nullptr;
 }
 

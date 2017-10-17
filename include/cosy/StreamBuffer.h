@@ -18,7 +18,7 @@ class StreamBuffer {
         explicit StreamBuffer(const char * filename);
         ~StreamBuffer();
 
-        bool ok() const;
+        bool valid() const;
         bool eof() const;
         int operator*();
         void operator++();

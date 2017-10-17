@@ -8,20 +8,20 @@ const std::string resources = "tests/resources/";
 TEST(StreamBufferTest, FileNotExist) {
     std::string path = resources + "not_exist.cnf";
     StreamBuffer in(path);
-    ASSERT_FALSE(in.ok());
+    ASSERT_FALSE(in.valid());
 }
 
 TEST(StreamBufferTest, FileExist) {
     std::string path = resources + "exist.cnf";
     StreamBuffer in(path);
-    ASSERT_TRUE(in.ok());
+    ASSERT_TRUE(in.valid());
 }
 
 TEST(StreamBufferTest, OperatorStar) {
     std::string path = resources + "exist.cnf";
     StreamBuffer in(path);
 
-    ASSERT_TRUE(in.ok());
+    ASSERT_TRUE(in.valid());
     ASSERT_EQ(*in, 'p');
 }
 
@@ -29,7 +29,7 @@ TEST(StreamBufferTest, OperatorPlusPlus) {
     std::string path = resources + "exist.cnf";
     StreamBuffer in(path);
 
-    ASSERT_TRUE(in.ok());
+    ASSERT_TRUE(in.valid());
     ASSERT_EQ(*in, 'p');
     ++in; ASSERT_EQ(*in, ' ');
     ++in; ASSERT_EQ(*in, 'c');
@@ -63,7 +63,7 @@ TEST(StreamBufferTest, OperatorParseInt) {
     StreamBuffer in(path);
     int read;
 
-    ASSERT_TRUE(in.ok());
+    ASSERT_TRUE(in.valid());
     ASSERT_EQ(*in, 'p');
     ++in; ASSERT_EQ(*in, ' ');
     ++in; ASSERT_EQ(*in, 'c');

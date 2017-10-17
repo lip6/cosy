@@ -1,5 +1,7 @@
 /* Copyright 2017 Hakan Metin - All rights reserved */
 
+#include <iostream>
+
 #include "cosy/ParserSaucy.h"
 
 using cosy::ParserSaucy;
@@ -18,6 +20,12 @@ ParserSaucy::parse(unsigned int num_vars, const std::string symmetryFile) {
 
     StreamBuffer in(symmetryFile);
     int parsed, lit;
+
+    if (! in.valid()) {
+        std::clog << "WARNING: Symmetry File " << symmetryFile << " not exists" <<
+            std::endl;
+        return generators;
+    }
 
     assert(*in == '[');
     ++in;
