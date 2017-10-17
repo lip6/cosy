@@ -88,7 +88,6 @@ With Bliss:
 
 ```
 ./launcher/bliss/launch.sh path_of_solver path_of_cnf_instance
-
 ```
 Bliss automorphism tool is used, see Bliss on LICENCE.md file.
 
@@ -97,9 +96,7 @@ With Saucy3:
 
 ```
 ./launcher/saucy/launch.sh path_of_solver path_of_cnf_instance
-
 ```
-
 The graph generated to found symmetries is based on BreakID implementation.
 See BreakID in LICENCE.md files.
 
