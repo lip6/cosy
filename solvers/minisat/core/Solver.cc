@@ -801,7 +801,7 @@ lbool Solver::solve_()
 
     // Set symmetry order
     if (symmetry != nullptr) {
-        // symmetry->activateLexLeaderForcing();
+         symmetry->activateLexLeaderForcing();
         symmetry->order(cosy::OrderType::OCCURENCE, cosy::T_LESS_F);
         symmetry->printInfo();
     }
