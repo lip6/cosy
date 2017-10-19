@@ -173,7 +173,8 @@ inline bool SymmetryController<T>::canForceLexLeader() {
 }
 
 template<class T>
-inline std::vector<T> SymmetryController<T>::generateForceLexLeaderEsbpg(T* propagate) {
+inline std::vector<T>
+SymmetryController<T>::generateForceLexLeaderEsbp(T* propagate) {
     cosy::Lit l;
     std::vector<cosy::Lit> r;
     T lit;
