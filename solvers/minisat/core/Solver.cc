@@ -475,6 +475,7 @@ CRef Solver::propagate()
                 if (sbp.size() == 1) {
                     cancelUntil(0);
                     uncheckedEnqueue(sbp[0]);
+                    return CRef_Undef;
                 } else {
                     CRef cr = ca.alloc(sbp, true);
                     learnts.push(cr);
