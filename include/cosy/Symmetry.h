@@ -51,7 +51,7 @@ class Symmetry {
         const Assigns& _assigns;
         const int _permutation_index;
 
-        std::unordered_map<Var, Var> _inverse;
+        std::unordered_map<Lit, Lit> _inverse;
 
         std::vector<Lit> _lookup_order;
         unsigned int _lookup_index;
