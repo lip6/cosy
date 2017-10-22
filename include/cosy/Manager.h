@@ -31,6 +31,9 @@ class Manager {
 
         void order(const std::vector<Lit>& order, LexType lex);
 
+        bool isUnitsLit();
+        Lit unitLit();
+        
         bool minimal(Var *cause);
         void sbp(std::vector<Lit>* reason);
 
@@ -61,6 +64,8 @@ class Manager {
         std::vector< std::unique_ptr<Symmetry> > _symmetries;
         std::vector< std::unordered_set<int> > _watchers;
 
+        std::unordered_set<Lit> _unit_clauses;
+        
         LexOrder _lex_order;
         Minimality _minimality;
         Propagator _propagator;
@@ -72,6 +77,8 @@ class Manager {
         std::unordered_set<Var> _symmetric_vars;
         uint64_t _num_conflicts;
         uint64_t _num_propagations;
+
+        void processUnitsLit();
 };
 
 }  // namespace cosy

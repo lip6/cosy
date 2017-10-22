@@ -41,6 +41,12 @@ class Symmetry {
 
         void debugPrint();
 
+        Lit first() const {
+            Lit r = _lookup_order.empty() ? LIT_UNDEF : _lookup_order.front();
+            return r;
+        }
+        Lit inverse(Lit lit) const { return _inverse.at(lit); }
+
         // Public API for tests
 
         unsigned int lookup_index() const { return _lookup_index; }

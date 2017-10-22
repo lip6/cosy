@@ -89,6 +89,29 @@ void Manager::cancel(Lit lit) {
     }
 }
 
+void Manager::processUnitsLit() {
+    for (const std::unique_ptr<Symmetry>& symmetry : _symmetries) {
+	Lit first = symmetry->first();
+	if (negate(first) == symmetry->inverse(first)) {
+	    if (_lex_order.minimum() == LiteralFalse)
+		_unit_clauses.insert(negate(varOf(first)));
+	    else
+		_unit_clauses.insert(varOf(first));
+	}
+    }
+}
+
+bool Manager::isUnitsLit() {
+    return _unit_clauses.size() > 0;
+}
+
+Lit Manager::unitLit() {
+    assert(_unit_clauses.size() > 0);
+    Lit lit = *_unit_clauses.begin();
+    _unit_clauses.erase(_unit_clauses.begin());
+    return lit;
+}
+
 void Manager::order(const std::vector<Lit>& order, LexType lex) {
     _lex_order.assign(order, lex);
 
@@ -97,6 +120,7 @@ void Manager::order(const std::vector<Lit>& order, LexType lex) {
             _symmetries[permutation_index]->_lookup_order.push_back(lit);
         }
     }
+    processUnitsLit();
 }
 
 bool Manager::minimal(Var *cause) {

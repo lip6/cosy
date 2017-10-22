@@ -36,6 +36,9 @@ class SymmetryController {
         void updateNotify(T lit, unsigned int level);
         void updateCancel(T lit);
 
+        bool isUnitsLit();
+        T unitLit();
+        
         bool isNotLexLeader(T propagated);
         std::vector<T>generateEsbp();
 
@@ -97,7 +100,8 @@ inline bool SymmetryController<T>::initialize(const std::string cnf_file,
 
 /* Configuration */
 template<class T>
-inline void SymmetryController<T>::order(const std::vector<T>& order, LexType lex) {
+inline void SymmetryController<T>::order(const std::vector<T>& order,
+                                         LexType lex) {
     std::vector<Lit> cosy_order;
     cosy::Lit lit;
 
@@ -130,6 +134,21 @@ inline void SymmetryController<T>::updateCancel(T lit) {
     cosy::Lit l = _literal_adapter->convert(lit);
     _manager->cancel(l);
 }
+
+
+template<class T>
+inline bool SymmetryController<T>::isUnitsLit() {
+    return _manager->isUnitsLit();
+}
+
+template<class T>
+inline T SymmetryController<T>::unitLit() {
+    cosy::Lit l = _manager->unitLit();
+    T lit =  _literal_adapter->convert(l);
+    return lit;
+}
+
+
 
 template<class T>
 inline bool SymmetryController<T>::isNotLexLeader(T propagated) {
