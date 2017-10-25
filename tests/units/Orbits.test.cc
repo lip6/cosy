@@ -19,16 +19,18 @@ class OrbitsTest : public testing::Test {
             generator->closeCurrentCycle();
 
             permutations.emplace_back(generator.release());
+            permutationsRef.push_back(permutations.front().get());
         }
 
         const unsigned int nvars = 6;
         std::unique_ptr<Permutation> generator;
         std::vector<std::unique_ptr<Permutation> > permutations;
+        std::vector<Permutation*> permutationsRef;
 };
 
 TEST_F(OrbitsTest, Compute) {
     Orbits orbits;
 
-    orbits.compute(permutations);
+    orbits.compute(permutationsRef);
     ASSERT_EQ(orbits.numOrbits(), static_cast<unsigned int>(2));
 }
