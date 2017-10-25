@@ -43,6 +43,9 @@ class Manager {
         bool propagate();
         void propagation(Lit *propagate, std::vector<Lit>* reason);
 
+
+        const std::vector<Permutation*> permutationsRef() const;
+
         void debugPrintPermutations();
         void debugPrintWatchers();
         void debugPrintSymmetries();
@@ -52,6 +55,7 @@ class Manager {
         uint64_t numGenerators()    const { return _permutations.size();   }
         uint64_t numConflicts()     const { return _num_conflicts;         }
         uint64_t numPropagations()  const { return _num_propagations;      }
+        uint64_t numInverting()     const { return _inverting.size();      }
 
         const LexOrder& lexOrder() const { return _lex_order; }
 
@@ -66,6 +70,7 @@ class Manager {
         std::vector< std::unique_ptr<Symmetry> > _symmetries;
         std::vector< std::unordered_set<int> > _watchers;
 
+        std::unordered_set<Var> _inverting;
         std::unordered_set<Lit> _unit_clauses;
 
         LexOrder _lex_order;

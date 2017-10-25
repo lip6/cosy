@@ -87,28 +87,19 @@ inline bool SymmetryController<T>::initialize(const std::string cnf_file,
     sym_parser = std::unique_ptr<ParserSaucy>(new ParserSaucy());
     permutations = sym_parser->parse(_num_vars, symmetry_file);
 
-    _orbits.compute(permutations);
-
-    _orbits.debugPrint();
-
-    /* Prepare reference for OrderManager */
-    for (const std::unique_ptr<Permutation>& p : permutations)
-        perms.push_back(p.get());
-
-    _order_manager = std::unique_ptr<OrderManager>
-        (new OrderManager(_num_vars,
-                          _model.occurences(),
-                          _orbits.orbits(),
-                          perms));
-
     /* Give ownership to Manager */
     _manager = std::unique_ptr<Manager>(new Manager(_num_vars));
     for (std::unique_ptr<Permutation>& permutation : permutations)
         _manager->addPermutation(std::move(permutation));
+    _manager->augmentGenerators();
 
+    perms = _manager->permutationsRef();
 
-    //_manager->debugPrintPermutations();
-    //    _manager->augmentGenerators();
+    _orbits.compute(perms);
+
+    _order_manager = std::unique_ptr<OrderManager>
+        (new OrderManager(_num_vars, _model.occurences(), perms,
+                          _manager->numInverting()));
 
     return _manager->numGenerators() > 0;
 }
@@ -239,6 +230,10 @@ inline void SymmetryController<T>::printInfo() {
     Printer::printStat("Number of vars in generators",
                        _manager->numSymmetricVars(),
                        static_cast<uint64_t>(_num_vars));
+    Printer::printStat("Number of inverting", _manager->numInverting(),
+                       static_cast<uint64_t>(_num_vars));
+
+
     Printer::print("");
 
     Printer::printSection(" Instance Informations ");
@@ -249,7 +244,7 @@ inline void SymmetryController<T>::printInfo() {
 template<class T>
 inline void SymmetryController<T>::printStats() {
     Printer::printSection(" Symmetry Statistics ");
-    Printer::printStat("Number of esbp", _manager->numConflicts());
+    _manager->printStats();
     Printer::print("");
 }
 

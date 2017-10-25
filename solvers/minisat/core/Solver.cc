@@ -473,6 +473,7 @@ CRef Solver::propagate()
                     sbp.push(l);
 
                 if (sbp.size() == 1) {
+                    assert(false);
                     cancelUntil(0);
                     uncheckedEnqueue(sbp[0]);
                     return CRef_Undef;
@@ -803,18 +804,12 @@ lbool Solver::solve_()
     // Set symmetry order
     if (symmetry != nullptr) {
         // symmetry->activateLexLeaderForcing();
-        symmetry->order(cosy::OrderType::BREAKID, cosy::T_LESS_F);
+        symmetry->order(cosy::OrderType::AUTO, cosy::T_LESS_F);
         symmetry->printInfo();
 
-        int units = 0;
-	while (symmetry->isUnitsLit()) {
-	    Lit l = symmetry->unitLit();
-	    std::cout << (sign(l)?"-":"") << var(l) << " 0" << std::endl;
-	    uncheckedEnqueue(l);
-            units++;
-	}
-
-        std::cout << "UNITS " << units << std::endl;
+        /* Add all unit clauses */
+	while (symmetry->isUnitsLit())
+	    uncheckedEnqueue(symmetry->unitLit());
     }
     solves++;
 

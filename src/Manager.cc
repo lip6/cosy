@@ -47,6 +47,9 @@ void Manager::addPermutation(std::unique_ptr<Permutation> permutation) {
 
             _symmetric_vars.insert(varOf(image));
 
+            if (negate(element) == image)
+                _inverting.insert(varOf(element));
+
             element = image;
         }
     }
@@ -64,47 +67,42 @@ void Manager::augmentGenerators() {
     Printer::print("Number Generator before augment", _permutations.size());
     for (unsigned int i=0; i<size; i++) {
         Permutation *permutation = _permutations[i].get();
-        // std::cout << std::endl << " Try Augment" << std::endl;
-        // permutation->debugPrint();
 
         augment_times = permutation->order() - 2;
 
         for (unsigned int augment=0; augment < augment_times; augment++) {
-            // std::cout << std::endl << "Augmenting ..." << std::endl;
-            permutation_inverse = std::unique_ptr<Permutation>(new Permutation(_num_vars));
+            permutation_inverse = std::unique_ptr<Permutation>
+                (new Permutation(_num_vars));
             for (int c=0; c<permutation->numCycles(); ++c) {
-                cycle.assign(permutation->cycle(c).begin(), permutation->cycle(c).end());
+                cycle.assign(permutation->cycle(c).begin(),
+                             permutation->cycle(c).end());
                 std::reverse(cycle.begin()+1, cycle.end());
 
                 for (const int& element : cycle)
                     permutation_inverse->addToCurrentCycle(element);
                 permutation_inverse->closeCurrentCycle();
             }
-            // permutation_inverse->debugPrint();
-            // std::cout << std::endl <<"Done" << std::endl;
 
             addPermutation(std::move(permutation_inverse));
             permutation = _permutations.back().get();
         }
     }
     Printer::print("Number Generator after  augment", _permutations.size());
-
 }
 
-//static int a = 0;
+const std::vector<Permutation*> Manager::permutationsRef() const {
+    std::vector<Permutation*> ref;
+    for (const std::unique_ptr<Permutation>& p : _permutations)
+        ref.push_back(p.get());
+
+    return ref;
+}
+
+
+
 void Manager::notify(Lit lit, unsigned int level) {
     _assigns.setLitTrue(lit, level);
 
-    // a++;
-    // if (a % 5000 == 0) {
-    //     std::cout << "esbp " << numConflicts() << std::endl;
-    //     int inact = 0;
-    //     for (const auto& p : _symmetries)
-    //         if (p->inactive())
-    //             inact++;
-    //     std::cout << "active " << numGenerators() - inact << std::endl;
-
-    // }
     if (!_minimality.minimal()) {
         return;
     }
@@ -147,6 +145,7 @@ void Manager::processUnitsLit() {
 		_unit_clauses.insert(varOf(first));
 	}
     }
+    Printer::printStat("number of units", _unit_clauses.size());
 }
 
 bool Manager::isUnitsLit() {
@@ -219,7 +218,7 @@ void Manager::debugPrintSymmetries() {
 }
 
 void Manager::printStats() {
-    std::cout << "symmetry conflicts   : " << _num_conflicts << std::endl;
+    Printer::printStat("number of esbp", _num_conflicts);
     // if (_opt_propagator_active)
     //     std::cout << "symmetry propagations: " << _num_propagations <<
     //         std::endl;
