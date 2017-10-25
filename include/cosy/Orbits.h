@@ -21,13 +21,12 @@ class Orbits {
         Orbits() {}
         ~Orbits() {}
 
-        void compute(const std::vector<std::unique_ptr<Permutation>>& perms);
         void compute(const std::vector<Permutation*>& perms);
 
         void debugPrint() const;
 
         const std::vector<Var> largestOrbit() const;
-        std::vector< std::vector<Var> > orbits() const;
+        const std::vector< std::vector<Var> > orbits() const;
 
         uint64_t numOrbits() const  { return _orbits.size(); }
  private:
@@ -35,37 +34,6 @@ class Orbits {
         std::unordered_set<Var> _symmetrics;
 };
 
-inline void
-Orbits::compute(const std::vector<std::unique_ptr<Permutation>>& perms) {
-    DisjointSets disjoint_sets;
-
-    _symmetrics.clear();
-    _orbits.clear();
-
-    for (const std::unique_ptr<Permutation>& permutation : perms) {
-        for (int c = 0; c < permutation->numCycles(); ++c) {
-            Lit element = permutation->lastElementInCycle(c);
-            Var v_element = varOf(element);
-
-            disjoint_sets.Add(v_element);
-            for (const Lit image : permutation->cycle(c)) {
-                Var v_image = varOf(image);
-
-                _symmetrics.insert(v_element);
-
-                disjoint_sets.Add(v_image);
-                disjoint_sets.Union(v_element, v_image);
-                element = image;
-                v_element = varOf(element);
-            }
-        }
-    }
-
-    for (const Var& var : _symmetrics) {
-        const Var representant = disjoint_sets.Find(var);
-        _orbits[representant].push_back(var);
-    }
-}
 
 
 inline void Orbits::compute(const std::vector<Permutation*>& perms) {
@@ -98,7 +66,6 @@ inline void Orbits::compute(const std::vector<Permutation*>& perms) {
         _orbits[representant].push_back(var);
     }
 }
-
 
 
 inline void Orbits::debugPrint() const {
@@ -135,7 +102,7 @@ inline const std::vector<Var> Orbits::largestOrbit() const {
 
 }
 
-inline std::vector< std::vector<Var> > Orbits::orbits() const {
+inline const std::vector< std::vector<Var> > Orbits::orbits() const {
     std::vector< std::vector<Var> > sorted_orbits;
     std::vector<Var> orbit;
 

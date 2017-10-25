@@ -234,21 +234,32 @@ inline void OrderManager::breakid_order() {
         for (const std::vector<Var>& orbit : orbits.orbits()) {
             if (next == VAR_UNDEF) {
                 largestOrbitSize = orbit.size();
-                for (const Var& var : orbit)
+                for (const Var& var : orbit) {
+                    if (occurences[var] == 0)
+                        continue;
                     if (next == VAR_UNDEF ||
                         occurences[var] < occurences[next] ||
                         (occurences[var] == occurences[next] && var < next))
                         next = var;
+                }
             } else if (orbit.size() >= largestOrbitSize) {
-                for (const Var& var : orbit)
+                for (const Var& var : orbit) {
+                    if (occurences[var] == 0)
+                        continue;
+
                     if (occurences[var] < occurences[next] ||
                         (occurences[var] == occurences[next] && var < next)) {
                         next = var;
                         largestOrbitSize = orbit.size();
                     }
+                }
             }
         }
 
+        if (next == VAR_UNDEF) {
+            std::cout << "Hmm..." << std::endl;
+            break;
+        }
         order.push_back(next);
 
         filter.clear();
@@ -257,6 +268,7 @@ inline void OrderManager::breakid_order() {
                 filter.push_back(p);
         }
         Q = filter;
+
     }
 
     /* Complete order */
@@ -276,6 +288,8 @@ inline void OrderManager::breakid_order() {
 
 
 inline void OrderManager::auto_order() {
+    std::cout << (static_cast<double>(_inverting) / _num_vars) << std::endl;
+
     if ((static_cast<double>(_inverting) / _num_vars) > 0.25)
         breakid_order();
     else
