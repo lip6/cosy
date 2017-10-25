@@ -45,12 +45,11 @@ test: third_party $(BIN)test
 run-test: test
 	./$(BIN)test
 run-test-valgrind: test
-	valgrind --leak-check=full ./$(BIN)test
+	$(call cmd-valgrind, ./$(BIN)test)
 run-test-gdb: test
-	gdb --args ./$(BIN)test
-
-run-coverage: run-test
-	gcovr -r $(OBJ)tests/$(SRC)
+	$(call cmd-gdb, ./$(BIN)test)
+run-test-coverage: run-test
+	$(call cmd-gcovr, $(OBJ)tests/$(SRC))
 
 check-style: $(sources) $(headers)
 	python ./scripts/cpplint.py $^

@@ -16,6 +16,27 @@ define cmd-call
   $(Q)./$(strip $(1)) $(2)
 endef
 
+# Call gcovr
+# Arg1 = object gcda directory
+define cmd-gcovr
+  $(call cmd-echo,   GCOVR  $(strip $(call cmd-format, $(1))))
+  $(Q) gcovr -r $(1)
+endef
+
+# Call gdb
+# Arg1 = binary
+define cmd-gdb
+  $(call cmd-echo,   GDB    $(strip $(call cmd-format, $(1))))
+  $(Q) gdb --args $(1)
+endef
+
+# Call valgrind
+# Arg1 = binary
+define cmd-gdb
+  $(call cmd-echo,   GDB    $(strip $(call cmd-format, $(1))))
+  $(Q) valgrind --leak-check=full $(1)
+endef
+
 define cmd-clean
   $(call cmd-echo,  CLEAN)
   $(Q)find . \
