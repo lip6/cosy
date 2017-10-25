@@ -26,6 +26,8 @@ class Manager {
         virtual ~Manager();
 
         void addPermutation(std::unique_ptr<Permutation> permutation);
+        void augmentGenerators();
+
         void notify(Lit lit, unsigned int level);
         void cancel(Lit lit);
 
@@ -33,7 +35,7 @@ class Manager {
 
         bool isUnitsLit();
         Lit unitLit();
-        
+
         bool minimal(Var *cause);
         void sbp(std::vector<Lit>* reason);
 
@@ -65,7 +67,7 @@ class Manager {
         std::vector< std::unordered_set<int> > _watchers;
 
         std::unordered_set<Lit> _unit_clauses;
-        
+
         LexOrder _lex_order;
         Minimality _minimality;
         Propagator _propagator;

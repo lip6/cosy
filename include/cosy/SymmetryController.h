@@ -38,7 +38,7 @@ class SymmetryController {
 
         bool isUnitsLit();
         T unitLit();
-        
+
         bool isNotLexLeader(T propagated);
         std::vector<T>generateEsbp();
 
@@ -62,9 +62,7 @@ template<class T>
 inline SymmetryController<T>::SymmetryController(const unsigned int num_vars,
                    const std::unique_ptr<LiteralAdapter<T>>& literal_adapter) :
     _num_vars(num_vars),
-    _literal_adapter(literal_adapter),
-    _manager(new Manager(num_vars)),
-    _order_manager(new OrderManager(num_vars)) {
+    _literal_adapter(literal_adapter) {
 }
 
 template<class T>
@@ -74,9 +72,11 @@ inline SymmetryController<T>::~SymmetryController() {
 /* Initialisation */
 template<class T>
 inline bool SymmetryController<T>::initialize(const std::string cnf_file,
-                                           const std::string symmetry_file) {
+                                              const std::string symmetry_file) {
     std::unique_ptr<Parser> sym_parser = nullptr;
     std::vector< std::unique_ptr<Permutation> > permutations;
+    std::vector<Permutation*> perms;
+
     CNFParser cnf_parser;
 
     if (symmetry_file.empty())
@@ -89,11 +89,26 @@ inline bool SymmetryController<T>::initialize(const std::string cnf_file,
 
     _orbits.compute(permutations);
 
-    _order_manager->orbits() = _orbits.orbits();
-    _order_manager->occurences() = _model.occurences();
+    _orbits.debugPrint();
 
+    /* Prepare reference for OrderManager */
+    for (const std::unique_ptr<Permutation>& p : permutations)
+        perms.push_back(p.get());
+
+    _order_manager = std::unique_ptr<OrderManager>
+        (new OrderManager(_num_vars,
+                          _model.occurences(),
+                          _orbits.orbits(),
+                          perms));
+
+    /* Give ownership to Manager */
+    _manager = std::unique_ptr<Manager>(new Manager(_num_vars));
     for (std::unique_ptr<Permutation>& permutation : permutations)
         _manager->addPermutation(std::move(permutation));
+
+
+    //_manager->debugPrintPermutations();
+    //    _manager->augmentGenerators();
 
     return _manager->numGenerators() > 0;
 }
@@ -215,6 +230,7 @@ SymmetryController<T>::generateForceLexLeaderEsbp(T* propagate) {
 /* Some prints */
 template<class T>
 inline void SymmetryController<T>::printInfo() {
+
     Printer::printSection(" Symmetry Informations ");
     Printer::printStat("Variable Order", _order_manager->orderString());
     Printer::printStat("Value Order", _manager->lexOrder().orderString());
@@ -227,6 +243,7 @@ inline void SymmetryController<T>::printInfo() {
 
     Printer::printSection(" Instance Informations ");
     _model.printStats();
+
 }
 
 template<class T>

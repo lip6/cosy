@@ -7,6 +7,7 @@ using cosy::Permutation;
 
 void Permutation::addToCurrentCycle(int x) {
     _cycles.push_back(x);
+    _contains.insert(x);
 }
 
 void Permutation::closeCurrentCycle() {
@@ -23,6 +24,40 @@ void Permutation::closeCurrentCycle() {
             _cycles_lim.push_back(sz);
         }
     }
+}
+
+bool Permutation::contains(int x) const {
+    return _contains.find(x) != _contains.end();
+}
+
+/* gcd and lcm is integrated to C++17 */
+int gcd(int a, int b) {
+    for (;;) {
+        if (a == 0)
+            return b;
+        b %= a;
+        if (b == 0)
+            return a;
+        a %= b;
+    }
+}
+
+int lcm(int a, int b) {
+    int temp = gcd(a, b);
+
+    return temp ? (a / temp * b) : 0;
+}
+
+int Permutation::order() {
+    if (_order != NOT_COMPUTED)
+        return _order;
+
+    _order = cycle(0).size();
+    for (int c = 1; c < numCycles(); ++c) {
+        _order = lcm(_order, cycle(c).size());
+    }
+
+    return _order;
 }
 
 Permutation::Iterator Permutation::cycle(int i) const {
@@ -49,5 +84,7 @@ void Permutation::debugPrint() {
         }
         std::clog << ")";
     }
+    std::clog << std::endl << "order " << order();
     std::clog << std::endl;
+
 }

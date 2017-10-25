@@ -206,7 +206,7 @@ void Symmetry::debugPrint() {
         << " | index: " << _lookup_index
         << " | confl: " << _num_conflicts
         << " | order: ";
-    for (unsigned int i = 0; i < _lookup_order.size(); i++)
-        std::clog << _lookup_order[i] << " ";
+    // for (unsigned int i = 0; i < _lookup_order.size(); i++)
+    //     std::clog << _lookup_order[i] << " ";
     std::clog << std::endl;
 }

@@ -7,16 +7,22 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <unordered_set>
 
 namespace cosy {
 
+#define NOT_COMPUTED -1
+
 class Permutation {
  public:
-        explicit Permutation(unsigned int size) : _size(size) {}
+        explicit Permutation(unsigned int size) : _size(size), _order(NOT_COMPUTED) {}
         ~Permutation() {}
 
         void addToCurrentCycle(int x);
         void closeCurrentCycle();
+
+        bool contains(int x) const;
+        int order();
 
         unsigned int size() const { return _size; }
         int numCycles() const { return _cycles_lim.size(); }
@@ -42,8 +48,10 @@ class Permutation {
 
  private:
         const int _size;
+        int _order;
         std::vector<int> _cycles;
         std::vector<int> _cycles_lim;
+        std::unordered_set<int> _contains;
 };
 
 struct Permutation::Iterator {

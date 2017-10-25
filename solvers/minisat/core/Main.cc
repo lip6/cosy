@@ -188,13 +188,13 @@ int main(int argc, char** argv)
         res = stdout;
         if (res != NULL){
             if (ret == l_True){
-                fprintf(res, "SATISFIABLE\nv ");
+                fprintf(res, "s SATISFIABLE\nv ");
                 for (int i = 0; i < S.nVars(); i++)
                     if (S.model[i] != l_Undef)
                         fprintf(res, "%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
                 fprintf(res, " 0\n");
             }else if (ret == l_False)
-                fprintf(res, "UNSATISFIABLE\n");
+                fprintf(res, "s UNSATISFIABLE\n");
             else
                 fprintf(res, "INDETERMINATE\n");
             fclose(res);

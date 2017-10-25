@@ -1,6 +1,7 @@
 /* Copyright 2017 Hakan Metin - All rights reserved */
 
 #include "cosy/Manager.h"
+#include "cosy/Printer.h"
 
 using cosy::Manager;
 using cosy::Permutation;
@@ -54,9 +55,56 @@ void Manager::addPermutation(std::unique_ptr<Permutation> permutation) {
     _symmetries.emplace_back(symmetry.release());
 }
 
+void Manager::augmentGenerators() {
+    std::unique_ptr<Permutation> permutation_inverse = nullptr;
+    std::vector<int> cycle;
+    unsigned int size = _permutations.size();
+    unsigned int augment_times;
+
+    Printer::print("Number Generator before augment", _permutations.size());
+    for (unsigned int i=0; i<size; i++) {
+        Permutation *permutation = _permutations[i].get();
+        // std::cout << std::endl << " Try Augment" << std::endl;
+        // permutation->debugPrint();
+
+        augment_times = permutation->order() - 2;
+
+        for (unsigned int augment=0; augment < augment_times; augment++) {
+            // std::cout << std::endl << "Augmenting ..." << std::endl;
+            permutation_inverse = std::unique_ptr<Permutation>(new Permutation(_num_vars));
+            for (int c=0; c<permutation->numCycles(); ++c) {
+                cycle.assign(permutation->cycle(c).begin(), permutation->cycle(c).end());
+                std::reverse(cycle.begin()+1, cycle.end());
+
+                for (const int& element : cycle)
+                    permutation_inverse->addToCurrentCycle(element);
+                permutation_inverse->closeCurrentCycle();
+            }
+            // permutation_inverse->debugPrint();
+            // std::cout << std::endl <<"Done" << std::endl;
+
+            addPermutation(std::move(permutation_inverse));
+            permutation = _permutations.back().get();
+        }
+    }
+    Printer::print("Number Generator after  augment", _permutations.size());
+
+}
+
+//static int a = 0;
 void Manager::notify(Lit lit, unsigned int level) {
     _assigns.setLitTrue(lit, level);
 
+    // a++;
+    // if (a % 5000 == 0) {
+    //     std::cout << "esbp " << numConflicts() << std::endl;
+    //     int inact = 0;
+    //     for (const auto& p : _symmetries)
+    //         if (p->inactive())
+    //             inact++;
+    //     std::cout << "active " << numGenerators() - inact << std::endl;
+
+    // }
     if (!_minimality.minimal()) {
         return;
     }

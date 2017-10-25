@@ -802,15 +802,19 @@ lbool Solver::solve_()
 
     // Set symmetry order
     if (symmetry != nullptr) {
-	// symmetry->activateLexLeaderForcing();
-        symmetry->order(cosy::OrderType::OCCURENCE, cosy::T_LESS_F);
+        // symmetry->activateLexLeaderForcing();
+        symmetry->order(cosy::OrderType::BREAKID, cosy::T_LESS_F);
         symmetry->printInfo();
 
+        int units = 0;
 	while (symmetry->isUnitsLit()) {
 	    Lit l = symmetry->unitLit();
-	    std::cout << "UNIT " << (sign(l)?"-":"") << var(l) << std::endl;
+	    std::cout << (sign(l)?"-":"") << var(l) << " 0" << std::endl;
 	    uncheckedEnqueue(l);
+            units++;
 	}
+
+        std::cout << "UNITS " << units << std::endl;
     }
     solves++;
 
