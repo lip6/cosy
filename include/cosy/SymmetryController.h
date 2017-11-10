@@ -23,7 +23,7 @@ namespace cosy {
 template<class T>
 class SymmetryController {
  public:
-        SymmetryController(const unsigned int num_vars,
+        explicit SymmetryController(
                     const std::unique_ptr<LiteralAdapter<T>>& literal_adapter);
         ~SymmetryController();
 
@@ -50,7 +50,7 @@ class SymmetryController {
         void printStats();
 
  private:
-        const unsigned int _num_vars;
+        unsigned int _num_vars;
         const std::unique_ptr<LiteralAdapter<T>>& _literal_adapter;
         Orbits _orbits;
         CNFModel _model;
@@ -59,9 +59,8 @@ class SymmetryController {
 };
 
 template<class T>
-inline SymmetryController<T>::SymmetryController(const unsigned int num_vars,
+inline SymmetryController<T>::SymmetryController(
                    const std::unique_ptr<LiteralAdapter<T>>& literal_adapter) :
-    _num_vars(num_vars),
     _literal_adapter(literal_adapter) {
 }
 
@@ -83,6 +82,7 @@ inline bool SymmetryController<T>::initialize(const std::string cnf_file,
         return false;
 
     _model = cnf_parser.parse(cnf_file);
+    _num_vars = _model.numVars();
 
     sym_parser = std::unique_ptr<ParserSaucy>(new ParserSaucy());
     permutations = sym_parser->parse(_num_vars, symmetry_file);
@@ -91,14 +91,14 @@ inline bool SymmetryController<T>::initialize(const std::string cnf_file,
     _manager = std::unique_ptr<Manager>(new Manager(_num_vars));
     for (std::unique_ptr<Permutation>& permutation : permutations)
         _manager->addPermutation(std::move(permutation));
-    _manager->augmentGenerators();
+    // _manager->augmentGenerators();
 
     perms = _manager->permutationsRef();
 
     _orbits.compute(perms);
 
     _order_manager = std::unique_ptr<OrderManager>
-        (new OrderManager(_num_vars, _model.occurences(), perms,
+        (new OrderManager(_num_vars, _model.occurences(), perms, _model,
                           _manager->numInverting()));
 
     return _manager->numGenerators() > 0;

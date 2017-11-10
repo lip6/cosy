@@ -134,6 +134,24 @@ int main(int argc, char** argv)
         if (in == NULL)
             printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
 
+
+        std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
+            (new MinisatLiteralAdapter());
+
+        S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
+            (new cosy::SymmetryController<Minisat::Lit>(adapter));
+
+        std::string symmetry_file = std::string(sym_file);
+        std::string cnf_file = std::string(argv[1]);
+
+        if (!S.symmetry->initialize(cnf_file, symmetry_file))
+            S.symmetry = nullptr;
+        else {
+            S.symmetry->order(cosy::OrderType::AUTO, cosy::T_LESS_F);
+            S.symmetry->printInfo();
+        }
+
+
         if (S.verbosity > 0){
             printf("============================[ Problem Statistics ]=============================\n");
             printf("|                                                                             |\n"); }
@@ -166,18 +184,6 @@ int main(int argc, char** argv)
             printf("UNSATISFIABLE\n");
             exit(20);
         }
-
-        std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
-            (new MinisatLiteralAdapter());
-
-        S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
-            (new cosy::SymmetryController<Minisat::Lit>(S.nVars(), adapter));
-
-        std::string symmetry_file = std::string(sym_file);
-        std::string cnf_file = std::string(argv[1]);
-
-        if (!S.symmetry->initialize(cnf_file, symmetry_file))
-            S.symmetry = nullptr;
 
         vec<Lit> dummy;
         lbool ret = S.solveLimited(dummy);

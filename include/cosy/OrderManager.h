@@ -13,6 +13,7 @@
 #include "cosy/Types.h"
 #include "cosy/Permutation.h"
 #include "cosy/Orbits.h"
+#include "cosy/CNFModel.h"
 
 namespace cosy {
 
@@ -44,11 +45,13 @@ class OrderManager {
         OrderManager(const unsigned int num_vars,
                      const std::vector<int>& occurences,
                      const std::vector<Permutation*>& permutations,
+                     const CNFModel& model,
                      unsigned int inverting) :
             _num_vars(num_vars),
             _type(UNKNOWN),
             _occurences(occurences),
             _permutations(permutations),
+            _model(model),
             _inverting(inverting) {}
 
         ~OrderManager() {}
@@ -69,6 +72,8 @@ class OrderManager {
 
         std::vector<int> _occurences;
         std::vector<Permutation *> _permutations;
+        const CNFModel& _model;
+
         unsigned int _inverting;
 
         void increase_order();
@@ -290,7 +295,8 @@ inline void OrderManager::breakid_order() {
 inline void OrderManager::auto_order() {
     std::cout << (static_cast<double>(_inverting) / _num_vars) << std::endl;
 
-    if ((static_cast<double>(_inverting) / _num_vars) > 0.25)
+    if ((static_cast<double>(_inverting) / _num_vars) > 0.25 ||
+        static_cast<double>(_model.numBinary()) / _num_vars > 0.3)
         breakid_order();
     else
         occurence_order();

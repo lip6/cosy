@@ -804,8 +804,6 @@ lbool Solver::solve_()
     // Set symmetry order
     if (symmetry != nullptr) {
         // symmetry->activateLexLeaderForcing();
-        symmetry->order(cosy::OrderType::AUTO, cosy::T_LESS_F);
-        symmetry->printInfo();
 
         /* Add all unit clauses */
 	while (symmetry->isUnitsLit())
