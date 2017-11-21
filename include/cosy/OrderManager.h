@@ -293,10 +293,7 @@ inline void OrderManager::breakid_order() {
 
 
 inline void OrderManager::auto_order() {
-    std::cout << (static_cast<double>(_inverting) / _num_vars) << std::endl;
-
-    if ((static_cast<double>(_inverting) / _num_vars) > 0.25 ||
-        static_cast<double>(_model.numBinary()) / _num_vars > 0.3)
+    if ((static_cast<double>(_inverting) / _num_vars) > 0.25)
         breakid_order();
     else
         occurence_order();
