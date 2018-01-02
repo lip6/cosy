@@ -48,7 +48,7 @@ void SymmetryManager::updateOrderedOrders(Literal literal) {
 void SymmetryManager::updateNotify(const Literal& literal) {
     DCHECK_NOTNULL(_order);
 
-    _assignment.assignFromTrueLiteral(literal);
+    _assignment.assignFromTrueLiteral(literal, false); // TODO ISDECISION
 
     if (_lex_leader.isNotLexLeader())
         return;

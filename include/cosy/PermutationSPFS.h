@@ -1,0 +1,39 @@
+#ifndef INCLUDE_COSY_PERMUTATIONSTATUS_H_
+#define INCLUDE_COSY_PERMUTATIONSTATUS_H_
+
+#include <unordered_map>
+#include <memory>
+
+#include "cosy/Assignment.h"
+#include "cosy/Clause.h"
+#include "cosy/Literal.h"
+#include "cosy/Permutation.h"
+
+namespace cosy {
+class PermutationSPFS {
+ public:
+    PermutationSPFS(const unsigned int permutation_index,
+                    const Assignment& assignment,
+                    const std::unique_ptr<Permutation>& permutation);
+    ~PermutationSPFS();
+
+    void updateNotify(Literal literal, const Clause& reason);
+    void updateCancel(Literal literal);
+
+
+ private:
+    const unsigned int _permutation_index;
+    const Assignment& _assignment;
+    std::unordered_map<Literal, Literal> _image;
+    std::unordered_map<Literal, Literal> _inverse;
+
+    Literal inverseOf(Literal literal) const;
+    Literal imageOf(Literal literal) const;
+
+    bool isActive() const;
+    bool isInactive() const;
+
+};
+
+}  // namespace cosy
+#endif  // INCLUDE_COSY_PERMUTATIONSTATUS_H_
