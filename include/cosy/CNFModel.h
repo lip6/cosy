@@ -1,84 +1,68 @@
-/* Copyright 2017 Hakan Metin - All rights reserved */
+// Copyright 2017 Hakan Metin
+// Licensed under the GPL, Version 3.0 (the "License");
 
-#ifndef INCLUDE_DSB_CNFMODEL_H_
-#define INCLUDE_DSB_CNFMODEL_H_
 
-#include <cassert>
+#ifndef SAT_CORE_CNFMODEL_H_
+#define SAT_CORE_CNFMODEL_H_
+
+#include <algorithm>
+#include <memory>
 #include <vector>
 
-#include "cosy/Types.h"
+#include "cosy/int_type_indexed_vector.h"
+#include "cosy/Clause.h"
+#include "cosy/Literal.h"
+#include "cosy/logging.h"
 
 namespace cosy {
 
 class CNFModel {
  public:
-        CNFModel() : _num_vars(0),
-                     _closed(true),
-                     _num_unary(0),
-                     _num_binary(0),
-                     _num_ternary(0) {}
-        ~CNFModel() {}
+    CNFModel();
+    ~CNFModel();
 
-        void addToCurrentClause(Lit lit);
-        void closeCurrentClause();
+    void addClause(std::vector<Literal>& literals);
 
-        uint64_t numVars()    const { return _num_vars; }
-        uint64_t numClauses() const { return _clauses.size(); }
-        uint64_t numUnary()      const { return _num_unary; }
-        uint64_t numBinary()     const { return _num_binary; }
-        uint64_t numTernary()    const { return _num_ternary; }
-        const std::vector<int>& occurences() const { return _occurences; }
+    uint64_t numberOfVariables() const;
+    uint64_t numberOfClauses() const;
 
-        void printStats();
+    uint64_t numberOfUnaryClauses()   const { return _unary_clauses.size();   }
+    uint64_t numberOfBinaryClauses()  const { return _binary_clauses.size();  }
+    uint64_t numberOfTernaryClauses() const { return _ternary_clauses.size(); }
+    uint64_t numberOfOtherClauses()   const { return _clauses.size();         }
 
-        void debugPrint();
+    const std::vector<std::unique_ptr<Clause>>& unaryClauses() const {
+        return _unary_clauses;
+    }
 
+    const std::vector<std::unique_ptr<Clause>>& binaryClauses() const{
+        return _binary_clauses;
+    }
+
+    const std::vector<std::unique_ptr<Clause>>& ternaryClauses() const {
+        return _ternary_clauses;
+    }
+
+    const std::vector<std::unique_ptr<Clause>>& otherClauses() const {
+        return _clauses;
+    }
+
+    const ITIVector<BooleanVariable, unsigned int>& occurences() const {
+        return _occurences;
+    }
 
  private:
-        unsigned int _num_vars;
-        std::vector<Clause> _clauses;
-        bool _closed;
+    uint64_t _num_variables;
+    std::vector<std::unique_ptr<Clause>> _unary_clauses;
+    std::vector<std::unique_ptr<Clause>> _binary_clauses;
+    std::vector<std::unique_ptr<Clause>> _ternary_clauses;
+    std::vector<std::unique_ptr<Clause>> _clauses;
 
-        std::vector<int> _occurences;
-        uint64_t _num_unary;
-        uint64_t _num_binary;
-        uint64_t _num_ternary;
+    ITIVector<BooleanVariable, unsigned int> _occurences;
+
+    DISALLOW_COPY_AND_ASSIGN(CNFModel);
 };
-
-inline void CNFModel::addToCurrentClause(Lit lit) {
-    if (varOf(lit) > _num_vars)
-        _num_vars = varOf(lit);
-
-    if (_closed) {
-        _clauses.push_back(Clause());
-        _closed = false;
-    }
-    _clauses.back().push_back(lit);
-
-    if (_num_vars >= _occurences.size())
-        _occurences.resize(_num_vars + 1, 0);
-    _occurences[varOf(lit)]++;
-}
-
-inline void CNFModel::closeCurrentClause() {
-    assert(_clauses.back().size() > 0);
-
-    _closed = true;
-
-    switch (_clauses.back().size()) {
-    case 1: _num_unary++;   break;
-    case 2: _num_binary++;  break;
-    case 3: _num_ternary++; break;
-    }
-}
 
 }  // namespace cosy
 
-#endif  // INCLUDE_DSB_CNFMODEL_H_
-
-/*
- * Local Variables:
- * mode: c++
- * indent-tabs-mode: nil
- * End:
- */
+#endif  // SAT_CORE_CNFMODEL_H_

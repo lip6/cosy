@@ -24,8 +24,8 @@ LFLAGS    ?= -Wall
 
 COPTIMIZE ?= -O3
 
-CFLAGS    += -I$(MROOT) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -std=c++11
-LFLAGS    += -lz -lcosy
+CFLAGS    += -I$(MROOT) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -std=c++11 -DUSE_GFLAGS=OFF
+LFLAGS    += -lz -lcosy   /data/hmetin/glog/lib/libglog.a  /data/hmetin/gflags/build/lib/libgflags.a -lpthread
 
 .PHONY : s p d r rs clean
 

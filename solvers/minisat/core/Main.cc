@@ -170,14 +170,13 @@ int main(int argc, char** argv)
         std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
             (new MinisatLiteralAdapter());
 
-        S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
-            (new cosy::SymmetryController<Minisat::Lit>(S.nVars(), adapter));
-
         std::string symmetry_file = std::string(sym_file);
         std::string cnf_file = std::string(argv[1]);
 
-        if (!S.symmetry->initialize(cnf_file, symmetry_file))
-            S.symmetry = nullptr;
+        S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
+            (new cosy::SymmetryController<Minisat::Lit>(cnf_file,
+                                                        symmetry_file,
+                                                        adapter));
 
         vec<Lit> dummy;
         lbool ret = S.solveLimited(dummy);
@@ -188,15 +187,15 @@ int main(int argc, char** argv)
         res = stdout;
         if (res != NULL){
             if (ret == l_True){
-                fprintf(res, "SATISFIABLE\nv ");
+                fprintf(res, "s SATISFIABLE\nv ");
                 for (int i = 0; i < S.nVars(); i++)
                     if (S.model[i] != l_Undef)
                         fprintf(res, "%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
                 fprintf(res, " 0\n");
             }else if (ret == l_False)
-                fprintf(res, "UNSATISFIABLE\n");
+                fprintf(res, "s UNSATISFIABLE\n");
             else
-                fprintf(res, "INDETERMINATE\n");
+                fprintf(res, "s INDETERMINATE\n");
             fclose(res);
         }
 

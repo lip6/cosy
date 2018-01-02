@@ -1,81 +1,81 @@
 
-#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
 
-#include "cosy/Minimality.h"
+// #include "cosy/Minimality.h"
 
-using namespace cosy;
-
-
-TEST(MinimalityTest, Minimal) {
-    Minimality minimality;
-
-    ASSERT_TRUE(minimality.minimal());
-}
+// using namespace cosy;
 
 
-TEST(MinimalityTest, notMinimal) {
-    Minimality minimality;
+// TEST(MinimalityTest, Minimal) {
+//     Minimality minimality;
 
-    std::vector<Lit> reason({2, -3});
-    Lit cause = -3;
+//     ASSERT_TRUE(minimality.minimal());
+// }
 
-    minimality.add(cause, reason);
-    ASSERT_FALSE(minimality.minimal());
-}
 
-TEST(MinimalityTest, sbp) {
-    Minimality minimality;
+// TEST(MinimalityTest, notMinimal) {
+//     Minimality minimality;
 
-    std::vector<Lit> reason({2, -3});
-    std::vector<Lit> r;
-    Lit cause = -3;
+//     std::vector<Lit> reason({2, -3});
+//     Lit cause = -3;
 
-    minimality.add(cause, reason);
-    ASSERT_FALSE(minimality.minimal());
+//     minimality.add(cause, reason);
+//     ASSERT_FALSE(minimality.minimal());
+// }
 
-    minimality.sbp(&r);
-    ASSERT_EQ(reason, r);
+// TEST(MinimalityTest, sbp) {
+//     Minimality minimality;
 
-    ASSERT_TRUE(minimality.minimal());
-}
+//     std::vector<Lit> reason({2, -3});
+//     std::vector<Lit> r;
+//     Lit cause = -3;
 
-TEST(MinimalityTest, Cause) {
-    Minimality minimality;
+//     minimality.add(cause, reason);
+//     ASSERT_FALSE(minimality.minimal());
 
-    std::vector<Lit> reason({2, -3});
-    std::vector<Lit> r;
-    Lit cause = -3;
+//     minimality.sbp(&r);
+//     ASSERT_EQ(reason, r);
 
-    minimality.add(cause, reason);
-    ASSERT_FALSE(minimality.minimal());
+//     ASSERT_TRUE(minimality.minimal());
+// }
 
-    ASSERT_EQ(minimality.cause(), static_cast<Var>(3));
-}
+// TEST(MinimalityTest, Cause) {
+//     Minimality minimality;
 
-TEST(MinimalityTest, RemoveOK) {
-    Minimality minimality;
+//     std::vector<Lit> reason({2, -3});
+//     std::vector<Lit> r;
+//     Lit cause = -3;
 
-    std::vector<Lit> reason({2, -3});
-    std::vector<Lit> r;
-    Lit cause = -3;
+//     minimality.add(cause, reason);
+//     ASSERT_FALSE(minimality.minimal());
 
-    minimality.add(cause, reason);
-    ASSERT_FALSE(minimality.minimal());
+//     ASSERT_EQ(minimality.cause(), static_cast<Var>(3));
+// }
 
-    minimality.removeIfCause(cause);
-    ASSERT_TRUE(minimality.minimal());
-}
+// TEST(MinimalityTest, RemoveOK) {
+//     Minimality minimality;
 
-TEST(MinimalityTest, NotRemove) {
-    Minimality minimality;
+//     std::vector<Lit> reason({2, -3});
+//     std::vector<Lit> r;
+//     Lit cause = -3;
 
-    std::vector<Lit> reason({2, -3});
-    std::vector<Lit> r;
-    Lit cause = -3, other = 42;
+//     minimality.add(cause, reason);
+//     ASSERT_FALSE(minimality.minimal());
 
-    minimality.add(cause, reason);
-    ASSERT_FALSE(minimality.minimal());
+//     minimality.removeIfCause(cause);
+//     ASSERT_TRUE(minimality.minimal());
+// }
 
-    minimality.removeIfCause(other);
-    ASSERT_FALSE(minimality.minimal());
-}
+// TEST(MinimalityTest, NotRemove) {
+//     Minimality minimality;
+
+//     std::vector<Lit> reason({2, -3});
+//     std::vector<Lit> r;
+//     Lit cause = -3, other = 42;
+
+//     minimality.add(cause, reason);
+//     ASSERT_FALSE(minimality.minimal());
+
+//     minimality.removeIfCause(other);
+//     ASSERT_FALSE(minimality.minimal());
+// }

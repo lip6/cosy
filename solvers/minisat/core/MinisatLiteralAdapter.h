@@ -3,7 +3,7 @@
 
 #include "cosy/LiteralAdapter.h"
 #include "core/SolverTypes.h"
-#include "cosy/Types.h"
+#include "cosy/Literal.h"
 
 #include <iostream>
 
@@ -15,11 +15,11 @@ class MinisatLiteralAdapter : public cosy::LiteralAdapter<Minisat::Lit>
         MinisatLiteralAdapter() {}
         ~MinisatLiteralAdapter() {}
 
-        virtual Minisat::Lit convert(cosy::Lit l) {
-            return mkLit(cosy::varOf(l) - 1, cosy::sign(l));
+        virtual Minisat::Lit convertFrom(cosy::Literal l) {
+            return mkLit(l.variable().value(), l.isNegative());
         }
 
-        virtual cosy::Lit convert(Minisat::Lit lit) {
+        virtual cosy::Literal convertTo(Minisat::Lit lit) {
             return (sign(lit) ? -(var(lit) + 1) : var(lit) + 1);
         }
 };

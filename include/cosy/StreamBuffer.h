@@ -1,45 +1,52 @@
-/* Copyright 2017 Hakan Metin - All rights reserved */
+// Copyright 2017 Hakan Metin
 
-#ifndef INCLUDE_DSB_STREAMBUFFER_H_
-#define INCLUDE_DSB_STREAMBUFFER_H_
+#ifndef SAT_CORE_STREAMBUFFER_H_
+#define SAT_CORE_STREAMBUFFER_H_
 
 #include <zlib.h>
-#include <cassert>
-#include <cstdlib>
-#include <cstdio>
+
+#include <cctype>
 #include <string>
 
-static const int BUFFER_SIZE = 4096;
+static const int kBufferSize = 4096;
+
+namespace cosy {
+
+enum StreamBufferError {
+    SUCCESS,
+    CANNOT_OPEN_FILE,
+    ERROR_PARSE_INT
+};
 
 class StreamBuffer {
  public:
-        StreamBuffer();
-        explicit StreamBuffer(const std::string filename);
-        explicit StreamBuffer(const char * filename);
-        ~StreamBuffer();
+    explicit StreamBuffer(const std::string& filename);
+    explicit StreamBuffer(const char * filename);
+    ~StreamBuffer();
 
-        bool valid() const;
-        bool eof() const;
-        int operator*();
-        void operator++();
-        int parseInt();
-        void skipLine();
-        void skipWhiteSpace();
+    int readInt();
+    void skipWhiteSpaces();
+    void skipLine();
+
+    int operator*();
+    void operator++();
+
+    bool isValid() const;
+    StreamBufferError error() const;
+    std::string errorMessage() const;
 
  private:
-        gzFile _in;
-        unsigned char _buffer[BUFFER_SIZE];
-        unsigned int _index;
-        unsigned int _size;
+    const std::string _filename;
+    gzFile _in;
+    unsigned char _buffer[kBufferSize];
+    unsigned int _index;
+    unsigned int _size;
+    StreamBufferError _error;
 
-        void nextChar();
-        void readLineIfNeed();
+    unsigned char read();
 };
-#endif  // INCLUDE_DSB_STREAMBUFFER_H_
 
-/*
- * Local Variables:
- * mode: c++
- * indent-tabs-mode: nil
- * End:
- */
+}  // namespace cosy
+
+
+#endif  // SAT_CORE_STREAMBUFFER_H_

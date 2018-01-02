@@ -1,23 +1,23 @@
-/* Copyright 2017 Hakan Metin - All rights reserved */
+// Copyright 2017 Hakan Metin
 
 #include "cosy/StreamBuffer.h"
+#include "cosy/logging.h"
 
-StreamBuffer::StreamBuffer() :
-    _in(nullptr),
-    _index(0),
-    _size(0) {
-}
+namespace cosy {
 
-StreamBuffer::StreamBuffer(const std::string filename) :
+StreamBuffer::StreamBuffer(const std::string& filename) :
     StreamBuffer(filename.c_str()) {
 }
 
 StreamBuffer::StreamBuffer(const char* filename) :
-    _in(nullptr),
-    _index(0),
-    _size(0) {
+        _filename(filename),
+        _in(nullptr),
+        _index(0),
+        _size(0),
+        _error(SUCCESS) {
     _in = gzopen(filename, "rb");
-    readLineIfNeed();
+    if (_in == nullptr)
+        _error = CANNOT_OPEN_FILE;
 }
 
 StreamBuffer::~StreamBuffer() {
@@ -26,66 +26,81 @@ StreamBuffer::~StreamBuffer() {
     }
 }
 
-bool StreamBuffer::valid() const {
-    return _in != nullptr;
-}
 
-bool StreamBuffer::eof() const {
-    return _buffer[_index] == '\0' || _size == 0;
-}
-
-int StreamBuffer::operator*() {
-    return (_index >= _size) ? EOF : _buffer[_index];
-}
-
-void StreamBuffer::operator++() {
-    nextChar();
-}
-
-int StreamBuffer::parseInt() {
+int StreamBuffer::readInt() {
     bool negative = false;
     int value = 0;
 
-    skipWhiteSpace();
+    skipWhiteSpaces();
 
-    if (_buffer[_index] == '-') {
+    unsigned char c = read();
+    if (c == '-') {
         negative = true;
-        nextChar();
-    } else if (_buffer[_index] == '+') {
-        nextChar();
+        ++(*this);
+    } else if (c == '+') {
+        negative = false;
+        ++(*this);
     }
-    while (!eof() && _buffer[_index] >= '0' && _buffer[_index] <= '9') {
+
+    while ((c = read()) != '\0' &&  c >= '0' && c <= '9') {
         value = (value * 10) + (_buffer[_index] - '0');
-        nextChar();
+        ++(*this);
     }
 
     return negative ? -value : value;
 }
 
+void StreamBuffer::skipWhiteSpaces() {
+    unsigned char c;
+
+    while ((c = read()) != '\0' && std::isspace(c)) {
+        _index++;
+    }
+}
+
 void StreamBuffer::skipLine() {
-    while (!eof() && _buffer[_index] != '\n')
-        nextChar();
-    if (!eof() && _buffer[_index] == '\n')
-        nextChar();
+    unsigned char c;
+
+    while ((c = read()) != '\0' && c != '\n') {
+        _index++;
+    }
+    ++(*this);
 }
 
-void StreamBuffer::nextChar() {
-    ++_index;
-    readLineIfNeed();
+
+int StreamBuffer::operator*() {
+    return static_cast<int>(read());
 }
 
-void StreamBuffer::readLineIfNeed() {
+void StreamBuffer::operator++() {
+    _index++;
+    read();
+}
+
+unsigned char StreamBuffer::read() {
     if (_index >= _size) {
-        _size = gzread(_in, _buffer, BUFFER_SIZE);
+        _size = gzread(_in, _buffer, sizeof(_buffer));
         _index = 0;
     }
+    return (_index >= _size) ? '\0' : _buffer[_index];
 }
 
-void StreamBuffer::skipWhiteSpace() {
-    unsigned char c = _buffer[_index];
 
-    while (!eof() && ((c >= 9 && c <= 13) || c == 32)) {
-        nextChar();
-        c = _buffer[_index];
+bool StreamBuffer::isValid() const {
+    return _error == SUCCESS;
+}
+
+StreamBufferError StreamBuffer::error() const {
+    return _error;
+}
+
+std::string StreamBuffer::errorMessage() const {
+    switch (_error) {
+    case SUCCESS: return std::string("Success");
+    case CANNOT_OPEN_FILE: return std::string("Cannot open file " + _filename);
+    case ERROR_PARSE_INT: return std::string("value is not an integer");
     }
+    return std::string("Unknown error");
 }
+
+}  // namespace cosy

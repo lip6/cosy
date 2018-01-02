@@ -29,6 +29,6 @@ class OrbitsTest : public testing::Test {
 TEST_F(OrbitsTest, Compute) {
     Orbits orbits;
 
-    orbits.compute(permutations);
-    ASSERT_EQ(orbits.numOrbits(), static_cast<unsigned int>(2));
+    orbits.assign(permutations);
+    ASSERT_EQ(orbits.numberOfOrbits(), static_cast<unsigned int>(2));
 }

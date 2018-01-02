@@ -88,6 +88,8 @@ Solver::Solver() :
   , simpDB_assigns     (-1)
   , simpDB_props       (0)
   , order_heap         (VarOrderLt(activity))
+  , order_heap_copy    (VarOrderLt(activity))
+
   , progress_estimate  (0)
   , remove_satisfied   (true)
 
@@ -206,6 +208,7 @@ bool Solver::satisfied(const Clause& c) const {
 //
 void Solver::cancelUntil(int level) {
     if (decisionLevel() > level){
+
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
             assigns [x] = l_Undef;
@@ -217,7 +220,8 @@ void Solver::cancelUntil(int level) {
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
-    } }
+    }
+}
 
 
 //=================================================================================================
@@ -434,8 +438,9 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     assigns[var(p)] = lbool(!sign(p));
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
-    if (symmetry != nullptr)
+    if (symmetry != nullptr) {
         symmetry->updateNotify(p, decisionLevel());
+    }
 }
 
 
@@ -465,22 +470,16 @@ CRef Solver::propagate()
         if (symmetry != nullptr) {
             if (symmetry->isNotLexLeader(p)) {
                 /* Generate SBP */
-                std::vector<Lit> vsbp = symmetry->generateEsbp();
+                std::vector<Lit> vsbp = symmetry->generateESBP();
 
                 // Dirty make a copy of vector
                 vec<Lit> sbp;
                 for (Lit l : vsbp)
                     sbp.push(l);
 
-                if (sbp.size() == 1) {
-                    cancelUntil(0);
-                    uncheckedEnqueue(sbp[0]);
-                    return CRef_Undef;
-                } else {
-                    CRef cr = ca.alloc(sbp, true);
-                    learnts.push(cr);
-                    attachClause(cr);
-                }
+                CRef cr = ca.alloc(sbp, true);
+                learnts.push(cr);
+                attachClause(cr);
             }
         }
 
@@ -526,29 +525,11 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
-        if (confl == CRef_Undef && qhead == trail.size() &&
-            symmetry != nullptr) {
-	    while (symmetry->canForceLexLeader()) {
-		Lit propagate;
-		vec<Lit> reason;
-                std::vector<Lit> r;
 
-                r = symmetry->generateForceLexLeaderEsbp(&propagate);
-
-                for (Lit l : r)
-                    reason.push(l);
-
-		if (value(propagate) != l_Undef)
-		    continue;
-		CRef cr = ca.alloc(reason, true);
-		learnts.push(cr);
-		attachClause(cr);
- 		uncheckedEnqueue(propagate, cr);
-	    }
-	}
     }
     propagations += num_props;
     simpDB_props -= num_props;
+
 
     return confl;
 }
@@ -677,6 +658,8 @@ lbool Solver::search(int nof_conflicts)
             cancelUntil(backtrack_level);
 
             if (learnt_clause.size() == 1){
+                // std::cout << "UNITAIRE " << (sign(learnt_clause[0])?"-":"") << var(learnt_clause[0])+1 << std::endl;
+
                 uncheckedEnqueue(learnt_clause[0]);
             }else{
                 CRef cr = ca.alloc(learnt_clause, true);
@@ -694,11 +677,13 @@ lbool Solver::search(int nof_conflicts)
                 learntsize_adjust_cnt    = (int)learntsize_adjust_confl;
                 max_learnts             *= learntsize_inc;
 
-                if (verbosity >= 1)
+                if (verbosity >= 1) {
                     printf("| %9d | %7d %8d %8d | %8d %8d %6.0f | %6.3f %% |\n",
                            (int)conflicts,
                            (int)dec_vars - (trail_lim.size() == 0 ? trail.size() : trail_lim[0]), nClauses(), (int)clauses_literals,
                            (int)max_learnts, nLearnts(), (double)learnts_literals/nLearnts(), progressEstimate()*100);
+                    symmetry->printSubStats();
+                }
             }
 
         }else{
@@ -746,6 +731,7 @@ lbool Solver::search(int nof_conflicts)
             // Increase decision level and enqueue 'next'
             newDecisionLevel();
             uncheckedEnqueue(next);
+
         }
     }
 }
@@ -802,13 +788,12 @@ lbool Solver::solve_()
 
     // Set symmetry order
     if (symmetry != nullptr) {
-	// symmetry->activateLexLeaderForcing();
-        symmetry->order(cosy::OrderType::OCCURENCE, cosy::T_LESS_F);
+        symmetry->order(cosy::VariableOrderType::AUTO,
+                        cosy::ValueOrderType::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
 	while (symmetry->isUnitsLit()) {
 	    Lit l = symmetry->unitLit();
-	    std::cout << "UNIT " << (sign(l)?"-":"") << var(l) << std::endl;
 	    uncheckedEnqueue(l);
 	}
     }
@@ -828,12 +813,14 @@ lbool Solver::solve_()
 
     // Search:
     int curr_restarts = 0;
+    std::vector<Lit> literals_order;
     while (status == l_Undef){
         double rest_base = luby_restart ? luby(restart_inc, curr_restarts) : pow(restart_inc, curr_restarts);
         status = search(rest_base * restart_first);
         if (!withinBudget()) break;
         curr_restarts++;
     }
+
 
     if (verbosity >= 1)
         printf("===============================================================================\n");
@@ -978,4 +965,24 @@ void Solver::garbageCollect()
         printf("|  Garbage collection:   %12d bytes => %12d bytes             |\n",
                ca.size()*ClauseAllocator::Unit_Size, to.size()*ClauseAllocator::Unit_Size);
     to.moveTo(ca);
+}
+
+
+void Solver::computeVSIDS(std::vector<Lit> *order) {
+    Var next = var_Undef;
+
+    order->clear();
+
+    assert(decisionLevel() == 0);
+
+    /* For units variables */
+    for (int i=0; i<trail.size(); i++)
+        order->push_back(trail[i]);
+
+    order_heap.copyTo(order_heap_copy);
+    while (!order_heap_copy.empty()) {
+        next = order_heap_copy.removeMin();
+        if (next != var_Undef)
+            order->push_back(mkLit(next, false /* polarity[next] */));
+    }
 }

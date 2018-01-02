@@ -2,10 +2,9 @@
 
 #include "cosy/Permutation.h"
 
-using cosy::Permutation;
+namespace cosy {
 
-
-void Permutation::addToCurrentCycle(int x) {
+void Permutation::addToCurrentCycle(Literal x) {
     _cycles.push_back(x);
 }
 
@@ -26,28 +25,32 @@ void Permutation::closeCurrentCycle() {
 }
 
 Permutation::Iterator Permutation::cycle(int i) const {
-    assert(i >= 0);
-    assert(i < numCycles());
+    DCHECK_GE(i, 0);
+    DCHECK_LT(i, numberOfCycles());
+
     return Iterator(_cycles.begin() + (i == 0 ? 0 : _cycles_lim[i - 1]),
         _cycles.begin() + _cycles_lim[i]);
 }
 
-int Permutation::lastElementInCycle(int i) const {
-    assert(i >= 0);
-    assert(i < numCycles());
+Literal Permutation::lastElementInCycle(int i) const {
+    DCHECK_GE(i, 0);
+    DCHECK_LT(i, numberOfCycles());
+
     return _cycles[_cycles_lim[i] - 1];
 }
 
 void Permutation::debugPrint() {
-    for (int c = 0; c < numCycles(); ++c) {
-        std::clog << "(";
-        for (const int element : cycle(c)) {
+    for (unsigned int c = 0; c < numberOfCycles(); ++c) {
+        std::cout << "(";
+        for (const Literal& element : cycle(c)) {
             if (element == lastElementInCycle(c))
-                std::clog << element;
+                std::cout << element.signedValue();
             else
-                std::clog << element << " ";
+                std::cout << element.signedValue() << " ";
         }
-        std::clog << ")";
+        std::cout << ")";
     }
-    std::clog << std::endl;
+    std::cout << std::endl;
 }
+
+}  // namespace cosy

@@ -3,7 +3,7 @@
 #ifndef INCLUDE_DSB_LITERALADAPTER_H_
 #define INCLUDE_DSB_LITERALADAPTER_H_
 
-#include "cosy/Types.h"
+#include "cosy/Literal.h"
 
 namespace cosy {
 
@@ -13,8 +13,8 @@ class LiteralAdapter {
         LiteralAdapter() {}
         virtual ~LiteralAdapter() {}
 
-        virtual T convert(cosy::Lit l) = 0;
-        virtual cosy::Lit convert(T from) = 0;
+        virtual T convertFrom(cosy::Literal l) = 0;
+        virtual cosy::Literal convertTo(T from) = 0;
 };
 
 }  // namespace cosy

@@ -9,7 +9,7 @@ debug_objects   := $(patsubst %.cc, $(OBJ)debug/%.o, $(sources))
 
 tests := $(wildcard tests/units/*.test.cc)
 tests_objects := $(patsubst %.cc, $(OBJ)%.o, $(tests))
-tests_objects += $(objects)
+tests_objects += $(debug_objects)
 tests_objects := $(filter-out %Main.o, $(tests_objects))
 
 lib  := libcosy.a
@@ -19,13 +19,14 @@ $(call REQUIRE-DIR,  $(BIN)test)
 $(call REQUIRE-DIR, $(objects))
 $(call REQUIRE-DIR, $(tests_objects))
 $(call REQUIRE-DEP, $(sources))
+$(call REQUIRE-DEP, $(tests))
 
 
 $(LIB)$(lib): $(objects)
 
 CFLAGS += -Iinclude/
 
-default: CFLAGS += -O3 -fPIC -Wall -Wextra
+default: CFLAGS += -O3 -fPIC -Wall -Wextra -g
 default: $(LIB)$(lib)
 
 
@@ -36,9 +37,10 @@ install: $(headers_dir) | default
 ################################################################################
 # TESTS
 
-LIB_DIR = third_party/googletest/googletest/build/
+GTEST = third_party/googletest/googletest/
+LIB_DIR = $(GTEST)build/
 
-CFLAGS_TEST = $(CFLAGS) -I third_party/googletest/googletest/include/
+CFLAGS_TEST = $(CFLAGS) -I $(GTEST)include/ -O0 -D DEBUG -g
 LDFLAGS_TEST = $(LDFLAGS) -L $(LIB_DIR) -lgtest -lgtest_main -lpthread
 
 test: third_party $(BIN)test
@@ -55,11 +57,11 @@ check-style: $(sources) $(headers)
 
 # Special build
 third_party: $(LIB_DIR)libgtest.a
-	$(call cmd-call, scripts/build_googletest.sh)
+
 .PHONY: third_party
 
 $(LIB_DIR)libgtest.a:
-	./scripts/build_googletest.sh
+	$(call cmd-call, scripts/build_googletest.sh)
 
 
 # # Generic rules
@@ -83,4 +85,4 @@ $(OBJ)release/%.o: %.cc
 	$(call cmd-cxx, $@, $<, $(CFLAGS))
 
 $(OBJ)debug/%.o: %.cc
-	$(call cmd-cxx, $@, $<, $(CFLAGS))
+	$(call cmd-cxx, $@, $<, $(CFLAGS_TEST))

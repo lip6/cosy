@@ -30,6 +30,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "core/SolverTypes.h"
 
 #include "cosy/SymmetryController.h"
+#include "cosy/Stats.h"
 
 namespace Minisat {
 
@@ -44,6 +45,14 @@ public:
     Solver();
     virtual ~Solver();
 
+    void computeVSIDS(std::vector<Lit> *order);
+
+    struct Stats : public cosy::StatsGroup {
+    Stats() : StatsGroup("Solver"),
+            d_dl("decision, decision level") {}
+        cosy::LinearStat d_dl;
+    };
+    Stats stats;
     // Problem specification:
     //
     Var     newVar    (bool polarity = true, bool dvar = true); // Add a new variable with parameters specifying variable mode.
@@ -193,6 +202,8 @@ protected:
     int64_t             simpDB_props;     // Remaining number of propagations that must be made before next execution of 'simplify()'.
     vec<Lit>            assumptions;      // Current set of assumptions provided to solve by the user.
     Heap<VarOrderLt>    order_heap;       // A priority queue of variables ordered with respect to the variable activity.
+    Heap<VarOrderLt>    order_heap_copy;       // A priority queue of variables ordered with respect to the variable activity.
+
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
 

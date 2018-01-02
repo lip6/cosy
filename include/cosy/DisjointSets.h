@@ -8,6 +8,8 @@
 #include <iostream>
 #include <utility>
 
+#include "cosy/logging.h"
+
 namespace cosy {
 
 class DisjointSets {
@@ -52,8 +54,8 @@ inline void DisjointSets::Add(unsigned int element) {
 }
 
 inline void DisjointSets::Union(int x, int y) {
-    assert(_nodes[x] != nullptr);
-    assert(_nodes[y] != nullptr);
+    CHECK_NOTNULL(_nodes[x]);
+    CHECK_NOTNULL(_nodes[y]);
 
     Node *x_root = _nodes[Find(x)].get();
     Node *y_root = _nodes[Find(y)].get();
