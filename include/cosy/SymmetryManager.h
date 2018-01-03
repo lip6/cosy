@@ -16,6 +16,7 @@
 #include "cosy/Order.h"
 #include "cosy/PermutationGroup.h"
 #include "cosy/PermutationStatus.h"
+#include "cosy/PermutationSPFS.h"
 #include "cosy/Stats.h"
 
 namespace cosy {
@@ -60,8 +61,10 @@ class SymmetryManager {
 
     std::unique_ptr<Order> _order;
     std::vector<std::unique_ptr<PermutationStatus>> _statuses;
-
     std::unordered_set<Literal> _units_clauses;
+
+    /* SPFS */
+    std::vector<std::unique_ptr<PermutationSPFS>> _symmetries_spfs;
 
 
     void updateOrderedOrders(Literal literal);

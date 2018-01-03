@@ -2,6 +2,9 @@
 #include "cosy/SymmetryManager.h"
 #include "cosy/Printer.h"
 
+
+static bool SPFSIsActive = true;
+
 namespace cosy {
 
 SymmetryManager::SymmetryManager(unsigned int num_vars,
@@ -13,9 +16,16 @@ SymmetryManager::SymmetryManager(unsigned int num_vars,
 
     for (const std::unique_ptr<Permutation>& perm : group) {
         const unsigned int index = _statuses.size();
+
         std::unique_ptr<PermutationStatus> status
             (new PermutationStatus(index, _assignment, _order, perm));
         _statuses.emplace_back(status.release());
+
+        if (SPFSIsActive) {
+            std::unique_ptr<PermutationSPFS> spfs
+                (new PermutationSPFS(index, _assignment, perm));
+            _symmetries_spfs.emplace_back(spfs.release());
+        }
     }
 
 }
@@ -56,7 +66,6 @@ void SymmetryManager::updateNotify(const Literal& literal) {
     BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.permutationWith(variable)) {
         const std::unique_ptr<PermutationStatus>& status = _statuses[index];
-
         status->updateNotifyLookupVariable(literal);
 
         if (status->isReducer()) {
@@ -64,12 +73,35 @@ void SymmetryManager::updateNotify(const Literal& literal) {
             break;
         }
     }
+
+    if (_lex_leader.isNotLexLeader() || !SPFSIsActive)
+        return;
+
+    /* SPFS */
+    for (const unsigned int& index : _group.permutationWith(variable)) {
+        const std::unique_ptr<PermutationSPFS>& spfs = _symmetries_spfs[index];
+        spfs->updateNotify(literal);
+    }
+
+
 }
 
 void SymmetryManager::updateCancel(const Literal& literal) {
     DCHECK_NOTNULL(_order);
 
     BooleanVariable variable = literal.variable();
+
+    /*
+      Update SPFS is done BEFORE unassignLiteral because it check the value
+      of unassigned literal
+    */
+
+    /* SPFS */
+    for (const unsigned int& index : _group.permutationWith(variable)) {
+        const std::unique_ptr<PermutationSPFS>& spfs = _symmetries_spfs[index];
+        spfs->updateCancel(literal);
+    }
+
     _assignment.unassignLiteral(literal);
 
     for (const unsigned int& index : _group.permutationWith(variable)) {
