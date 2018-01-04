@@ -55,15 +55,25 @@ void SymmetryManager::updateOrderedOrders(Literal literal) {
 
 }
 
-void SymmetryManager::updateNotify(const Literal& literal) {
+void SymmetryManager::updateNotify(const Literal& literal,
+                                   unsigned int decicionLevel,
+                                   bool isDecision) {
     DCHECK_NOTNULL(_order);
 
-    _assignment.assignFromTrueLiteral(literal, false); // TODO ISDECISION
+    _assignment.assignFromTrueLiteral(literal, isDecision);
 
+        BooleanVariable variable = literal.variable();
+
+    /* SPFS */
+    for (const unsigned int& index : _group.permutationWith(variable)) {
+        const std::unique_ptr<PermutationSPFS>& spfs = _symmetries_spfs[index];
+        spfs->updateNotify(literal);
+    }
+
+    /* ESBP */
     if (_lex_leader.isNotLexLeader())
         return;
 
-    BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.permutationWith(variable)) {
         const std::unique_ptr<PermutationStatus>& status = _statuses[index];
         status->updateNotifyLookupVariable(literal);
@@ -74,14 +84,6 @@ void SymmetryManager::updateNotify(const Literal& literal) {
         }
     }
 
-    if (_lex_leader.isNotLexLeader() || !SPFSIsActive)
-        return;
-
-    /* SPFS */
-    for (const unsigned int& index : _group.permutationWith(variable)) {
-        const std::unique_ptr<PermutationSPFS>& spfs = _symmetries_spfs[index];
-        spfs->updateNotify(literal);
-    }
 
 
 }
@@ -116,13 +118,39 @@ void SymmetryManager::updateCancel(const Literal& literal) {
 
 
 bool SymmetryManager::isNotLexLeader(const Literal& literal) const {
-
     return _lex_leader.isNotLexLeader(literal);
 }
 
 const std::unique_ptr<Clause>& SymmetryManager::generateESBP() {
     _stats.esbp.add(1);
     return _lex_leader.esbp();
+}
+
+
+bool SymmetryManager::canSPFSPropagate(Literal* propagate) {
+    LiteralIndex literal = kNoLiteralIndex;
+    for (const std::unique_ptr<PermutationSPFS>& spfs : _symmetries_spfs) {
+        literal = spfs->getFirstAsymetricLiteral();
+        if (literal != kNoLiteralIndex) {
+            _spfs_propagator.assign(spfs.get(), literal);
+            break;
+        }
+    }
+
+    if (literal != kNoLiteralIndex) {
+        *propagate = Literal(literal);
+        return true;
+    }
+    return false;
+}
+
+void
+SymmetryManager::generateSymmetricClause(const std::vector<Literal>& reason,
+                                         std::vector<Literal> *implication) {
+    DCHECK(_spfs_propagator.canPropagate());
+    PermutationSPFS * permutation =  _spfs_propagator.permutation();
+    permutation->generateSymmetricClause(reason, implication);
+    _spfs_propagator.clear();
 }
 
 

@@ -18,6 +18,7 @@
 #include "cosy/PermutationStatus.h"
 #include "cosy/PermutationSPFS.h"
 #include "cosy/Stats.h"
+#include "cosy/SPFSPropagator.h"
 
 namespace cosy {
 
@@ -29,11 +30,17 @@ class SymmetryManager {
 
     void setOrder(std::unique_ptr<Order> && order);
 
-    void updateNotify(const Literal& literal);
+    void updateNotify(const Literal& literal, unsigned int decicionLevel,
+                      bool isDecision);
     void updateCancel(const Literal& literal);
 
     bool isNotLexLeader(const Literal& literal) const;
     const std::unique_ptr<Clause>& generateESBP();
+
+    /* SPFS */
+    bool canSPFSPropagate(Literal *propagate);
+    void generateSymmetricClause(const std::vector<Literal>& reason,
+                                 std::vector<Literal> *implication);
 
     // void searchLexLeaderForcing(Literal literal);
 
@@ -65,7 +72,7 @@ class SymmetryManager {
 
     /* SPFS */
     std::vector<std::unique_ptr<PermutationSPFS>> _symmetries_spfs;
-
+    SPFSPropagator _spfs_propagator;
 
     void updateOrderedOrders(Literal literal);
     void findUnitClauses();

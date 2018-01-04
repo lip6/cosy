@@ -38,7 +38,7 @@ class SymmetryController {
     void order(std::vector<T> order, ValueOrderType valueOderType);
 
 
-    void updateNotify(T lit, unsigned int level);
+    void updateNotify(T lit, unsigned int level, bool isDecision);
     void updateCancel(T lit);
     void notifyOrderAnalysis();
 
@@ -46,8 +46,11 @@ class SymmetryController {
     T unitLit();
 
     bool isNotLexLeader(T propagated);
-    std::vector<T>generateESBP();
+    std::vector<T> generateESBP();
 
+    /* SPFS */
+    bool canSPFSPropagate(T *propagate);
+    std::vector<T> generateSPFSClause(const std::vector<T>& reason);
     // void activateLexLeaderForcing();
     // bool canForceLexLeader(T propagate);
     // std::vector<T>generateForceLexLeaderESBP();
@@ -136,9 +139,10 @@ inline void SymmetryController<T>::order(std::vector<T> lits,
 
 
 template<class T>
-inline void SymmetryController<T>::updateNotify(T lit, unsigned int level) {
+inline void SymmetryController<T>::updateNotify(T lit, unsigned int level,
+                                                bool isDecision) {
     cosy::Literal l = _literal_adapter->convertTo(lit);
-    _symmetry_manager->updateNotify(l);
+    _symmetry_manager->updateNotify(l, level, isDecision);
 }
 
 template<class T>
@@ -169,6 +173,34 @@ inline bool SymmetryController<T>::isNotLexLeader(T propagated) {
     cosy::Literal l = _literal_adapter->convertTo(propagated);
     return _symmetry_manager->isNotLexLeader(l);
 }
+
+
+template<class T>
+inline bool SymmetryController<T>::canSPFSPropagate(T *propagate) {
+    cosy::Literal l;
+    bool result = _symmetry_manager->canSPFSPropagate(&l);
+    if (result)
+        *propagate = _literal_adapter->convertFrom(l);
+    return result;
+}
+
+template<class T> inline std::vector<T>
+SymmetryController<T>::generateSPFSClause(const std::vector<T>& reason) {
+    std::vector<T> implication;
+    std::vector<cosy::Literal> implication_cosy;
+    std::vector<cosy::Literal> reason_cosy;
+
+    for (const T& l : reason)
+        reason_cosy.push_back(_literal_adapter->convertTo(l));
+
+    _symmetry_manager->generateSymmetricClause(reason_cosy, &implication_cosy);
+
+    for (const cosy::Literal l : implication_cosy)
+        implication.push_back(_literal_adapter->convertFrom(l));
+
+    return implication;
+}
+
 
 template<class T>
 inline std::vector<T> SymmetryController<T>::generateESBP() {

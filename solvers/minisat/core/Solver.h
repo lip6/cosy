@@ -22,6 +22,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Minisat_Solver_h
 
 #include <memory>
+#include <string>
+#include <functional>
 
 #include "mtl/Vec.h"
 #include "mtl/Heap.h"
@@ -45,7 +47,11 @@ public:
     Solver();
     virtual ~Solver();
 
+
     void computeVSIDS(std::vector<Lit> *order);
+    void printClause(CRef cr, bool colored = false);
+    void printClause(const Clause& clause, bool colored = false);
+    void printClause(const vec<Lit>& clause, bool colored = false);
 
     struct Stats : public cosy::StatsGroup {
     Stats() : StatsGroup("Solver"),

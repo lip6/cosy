@@ -439,7 +439,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
     if (symmetry != nullptr) {
-        symmetry->updateNotify(p, decisionLevel());
+        symmetry->updateNotify(p, decisionLevel(), from == CRef_Undef);
     }
 }
 
@@ -467,21 +467,21 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        if (symmetry != nullptr) {
-            if (symmetry->isNotLexLeader(p)) {
-                /* Generate SBP */
-                std::vector<Lit> vsbp = symmetry->generateESBP();
+        // if (symmetry != nullptr) {
+        //     if (symmetry->isNotLexLeader(p)) {
+        //         /* Generate SBP */
+        //         std::vector<Lit> vsbp = symmetry->generateESBP();
 
-                // Dirty make a copy of vector
-                vec<Lit> sbp;
-                for (Lit l : vsbp)
-                    sbp.push(l);
+        //         // Dirty make a copy of vector
+        //         vec<Lit> sbp;
+        //         for (Lit l : vsbp)
+        //             sbp.push(l);
 
-                CRef cr = ca.alloc(sbp, true);
-                learnts.push(cr);
-                attachClause(cr);
-            }
-        }
+        //         CRef cr = ca.alloc(sbp, true);
+        //         learnts.push(cr);
+        //         attachClause(cr);
+        //     }
+        // }
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -525,6 +525,37 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
+
+        if (symmetry != nullptr &&
+            qhead == trail.size() && confl == CRef_Undef) {
+            Lit propagate;
+            if (symmetry->canSPFSPropagate(&propagate)) {
+                if (level(var(propagate)) == 0) {
+                    std::cout << "LEVEL 0" << std::endl;
+                    break;
+                }
+
+                assert(reason(var(propagate)) != CRef_Undef);
+                const Clause& c = ca[reason(var(propagate))];
+                std::vector<Lit> vector_reason;
+                for (int i=0; i<c.size(); i++)
+                    vector_reason.push_back(c[i]);
+
+                std::vector<Lit> tmp =
+                    symmetry->generateSPFSClause(vector_reason);
+
+                vec<Lit> propagate_reason;
+                for (const Lit& l : tmp)
+                    propagate_reason.push(l);
+
+                printClause(c, true);
+                printClause(propagate_reason, true);
+
+                std::cout << "SPFS PROPAGATE " << var(propagate) << std::endl;
+
+            }
+
+        }
 
     }
     propagations += num_props;
@@ -985,4 +1016,73 @@ void Solver::computeVSIDS(std::vector<Lit> *order) {
         if (next != var_Undef)
             order->push_back(mkLit(next, false /* polarity[next] */));
     }
+}
+
+
+void Solver::printClause(CRef cr, bool colored /* = false */) {
+    printClause(ca[cr], colored);
+}
+
+void Solver::printClause(const Clause& clause, bool colored /* = false */) {
+   std::string color, default_color;
+
+    std::function<std::string(bool e, lbool lb)> f_color =
+	[] (bool e, lbool lb) {
+
+	const std::string red_color = "\033[1;31m";
+	const std::string green_color = "\033[1;32m";
+	const std::string white_color = "\033[1;37m";
+
+	if (!e)
+	    return std::string();
+
+	if (lb == l_False)
+	    return red_color;
+	else if (lb == l_True)
+	    return green_color;
+	else
+	    return white_color;
+    };
+
+    if (colored) {
+	default_color = "\033[0m";
+    }
+
+    for (int i=0; i<clause.size(); i++) {
+	color = f_color(colored, value(clause[i]));
+	std::cout << color << clause[i] << default_color << " ";
+    }
+    std::cout << std::endl;
+}
+
+void Solver::printClause(const vec<Lit>& clause, bool colored /* = false */) {
+   std::string color, default_color;
+
+    std::function<std::string(bool e, lbool lb)> f_color =
+	[] (bool e, lbool lb) {
+
+	const std::string red_color = "\033[1;31m";
+	const std::string green_color = "\033[1;32m";
+	const std::string white_color = "\033[1;37m";
+
+	if (!e)
+	    return std::string();
+
+	if (lb == l_False)
+	    return red_color;
+	else if (lb == l_True)
+	    return green_color;
+	else
+	    return white_color;
+    };
+
+    if (colored) {
+	default_color = "\033[0m";
+    }
+
+    for (int i=0; i<clause.size(); i++) {
+	color = f_color(colored, value(clause[i]));
+	std::cout << color << clause[i] << default_color << " ";
+    }
+    std::cout << std::endl;
 }

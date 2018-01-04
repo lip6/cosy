@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <deque>
 #include <memory>
+#include <vector>
 
 #include "cosy/Assignment.h"
 #include "cosy/Clause.h"
@@ -22,7 +23,11 @@ class PermutationSPFS {
     void updateNotify(Literal literal);
     void updateCancel(Literal literal);
 
-    LiteralIndex getNextToPropagate();
+    LiteralIndex getFirstAsymetricLiteral();
+
+
+    void generateSymmetricClause(const std::vector<Literal>&reason,
+                                 std::vector<Literal> *implication);
 
  private:
     const unsigned int _permutation_index;
