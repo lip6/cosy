@@ -92,6 +92,13 @@ void PermutationSPFS::generateSymmetricClause(const std::vector<Literal>&reason,
 
 }
 
+void PermutationSPFS::generateSymmetricClause(const Literal& level_zero_lit,
+                                            std::vector<Literal> *implication) {
+    implication->clear();
+    implication->push_back(level_zero_lit.negated());
+    implication->push_back(imageOf(level_zero_lit));
+}
+
 
 LiteralIndex PermutationSPFS::getFirstAsymetricLiteral() {
     if (! isActive())

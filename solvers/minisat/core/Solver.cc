@@ -528,33 +528,8 @@ CRef Solver::propagate()
 
         if (symmetry != nullptr &&
             qhead == trail.size() && confl == CRef_Undef) {
-            Lit propagate;
-            if (symmetry->canSPFSPropagate(&propagate)) {
-                if (level(var(propagate)) == 0) {
-                    std::cout << "LEVEL 0" << std::endl;
-                    break;
-                }
 
-                assert(reason(var(propagate)) != CRef_Undef);
-                const Clause& c = ca[reason(var(propagate))];
-                std::vector<Lit> vector_reason;
-                for (int i=0; i<c.size(); i++)
-                    vector_reason.push_back(c[i]);
-
-                std::vector<Lit> tmp =
-                    symmetry->generateSPFSClause(vector_reason);
-
-                vec<Lit> propagate_reason;
-                for (const Lit& l : tmp)
-                    propagate_reason.push(l);
-
-                printClause(c, true);
-                printClause(propagate_reason, true);
-
-                std::cout << "SPFS PROPAGATE " << var(propagate) << std::endl;
-
-            }
-
+            confl = SPFSPropagateSymmetric();
         }
 
     }
@@ -999,6 +974,94 @@ void Solver::garbageCollect()
 }
 
 
+CRef Solver::SPFSPropagateSymmetric() {
+    Lit element;
+    std::vector<Lit> vector_element_reason;;
+    std::vector<Lit> vector_image_reason;;
+    vec<Lit> vec_element_reason;
+    vec<Lit> vec_image_reason;
+
+    if (!symmetry->canSPFSPropagate(&element))
+        return CRef_Undef;
+
+
+    if (level(var(element)) == 0) {
+        std::cout << "Level 0: " << var(element) << std::endl;
+        vector_image_reason = symmetry->generateSPFSClause(element);
+    } else {
+        assert(reason(var(element)) != CRef_Undef);
+        const Clause& c = ca[reason(var(element))];
+        // printClause(c, true);
+        for (int i=0; i<c.size(); i++)
+            vector_element_reason.push_back(c[i]);
+
+        vector_image_reason =
+            symmetry->generateSPFSClause(vector_element_reason);
+    }
+    for (const Lit& l : vector_image_reason)
+        vec_image_reason.push(l);
+
+    // printClause(vec_image_reason, true);
+
+    sortSymmetricalClause(vec_image_reason);
+
+    // printClause(vec_image_reason, true);
+
+    Lit first = vec_image_reason[0];
+    Lit second = vec_image_reason[1];
+
+    cancelUntil(level(var(second)));
+
+    assert(value(first)!=l_True);
+    assert(value(second) == l_False);
+
+    CRef cr = ca.alloc(vec_image_reason, true);
+    learnts.push(cr);
+    attachClause(cr);
+    claBumpActivity(ca[cr]);
+
+
+    if (value(first) == l_Undef) {  // Unit propagation
+        uncheckedEnqueue(first, cr);
+    } else {  // Conflict
+        return cr;
+    }
+
+    return CRef_Undef;
+}
+
+void Solver::sortSymmetricalClause(vec<Lit>& clause) {
+    assert(clause.size() >= 2);
+
+    int first = 0;
+    int second = 1;
+    for(int i=1; i<clause.size(); ++i) {
+        assert(value(clause[i]) != l_True);
+        if (value(clause[first]) != l_Undef && (value(clause[i]) == l_Undef || hasLowerLevel(clause[first], clause[i]))) {
+            second = first;
+            first = i;
+        } else if (value(clause[second]) != l_Undef && (value(clause[i]) == l_Undef || hasLowerLevel(clause[second], clause[i]))) {
+            second = i;
+        }
+    }
+
+    // note: swapping the final literals to their place is pretty tricky. Imagine for instance the case where first==0 or second==1 ;)
+    if (first != 0) {
+        Lit temp = clause[0];
+        clause[0] = clause[first];
+        clause[first] = temp;
+    }
+    assert(second != first);
+    if (second == 0) {
+        second = first;
+    }
+    if (second != 1) {
+        Lit temp = clause[1];
+        clause[1] = clause[second];
+        clause[second] = temp;
+    }
+}
+
 void Solver::computeVSIDS(std::vector<Lit> *order) {
     Var next = var_Undef;
 
@@ -1050,7 +1113,8 @@ void Solver::printClause(const Clause& clause, bool colored /* = false */) {
 
     for (int i=0; i<clause.size(); i++) {
 	color = f_color(colored, value(clause[i]));
-	std::cout << color << clause[i] << default_color << " ";
+	std::cout << color << clause[i] << "(" << level(var(clause[i])) << ")"
+                  << default_color << " ";
     }
     std::cout << std::endl;
 }
@@ -1082,7 +1146,9 @@ void Solver::printClause(const vec<Lit>& clause, bool colored /* = false */) {
 
     for (int i=0; i<clause.size(); i++) {
 	color = f_color(colored, value(clause[i]));
-	std::cout << color << clause[i] << default_color << " ";
+        std::cout << color << clause[i] << "(" << level(var(clause[i])) << ")"
+                  << default_color << " ";
+
     }
     std::cout << std::endl;
 }

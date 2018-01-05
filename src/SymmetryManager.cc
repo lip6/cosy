@@ -83,9 +83,6 @@ void SymmetryManager::updateNotify(const Literal& literal,
             break;
         }
     }
-
-
-
 }
 
 void SymmetryManager::updateCancel(const Literal& literal) {
@@ -150,6 +147,14 @@ SymmetryManager::generateSymmetricClause(const std::vector<Literal>& reason,
     DCHECK(_spfs_propagator.canPropagate());
     PermutationSPFS * permutation =  _spfs_propagator.permutation();
     permutation->generateSymmetricClause(reason, implication);
+    _spfs_propagator.clear();
+}
+
+void
+SymmetryManager::generateSymmetricClause(const Literal& level_zero_lit,
+                                         std::vector<Literal> *implication) {
+    PermutationSPFS * permutation =  _spfs_propagator.permutation();
+    permutation->generateSymmetricClause(level_zero_lit, implication);
     _spfs_propagator.clear();
 }
 

@@ -51,6 +51,7 @@ class SymmetryController {
     /* SPFS */
     bool canSPFSPropagate(T *propagate);
     std::vector<T> generateSPFSClause(const std::vector<T>& reason);
+    std::vector<T> generateSPFSClause(const T& level_zero_lit);
     // void activateLexLeaderForcing();
     // bool canForceLexLeader(T propagate);
     // std::vector<T>generateForceLexLeaderESBP();
@@ -194,6 +195,20 @@ SymmetryController<T>::generateSPFSClause(const std::vector<T>& reason) {
         reason_cosy.push_back(_literal_adapter->convertTo(l));
 
     _symmetry_manager->generateSymmetricClause(reason_cosy, &implication_cosy);
+
+    for (const cosy::Literal l : implication_cosy)
+        implication.push_back(_literal_adapter->convertFrom(l));
+
+    return implication;
+}
+
+template<class T> inline std::vector<T>
+SymmetryController<T>::generateSPFSClause(const T& level_zero_lit) {
+    std::vector<T> implication;
+    std::vector<cosy::Literal> implication_cosy;
+    cosy::Literal lit = _literal_adapter->convertTo(level_zero_lit);
+
+    _symmetry_manager->generateSymmetricClause(lit, &implication_cosy);
 
     for (const cosy::Literal l : implication_cosy)
         implication.push_back(_literal_adapter->convertFrom(l));

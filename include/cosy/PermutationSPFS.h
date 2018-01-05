@@ -29,6 +29,10 @@ class PermutationSPFS {
     void generateSymmetricClause(const std::vector<Literal>&reason,
                                  std::vector<Literal> *implication);
 
+    void generateSymmetricClause(const Literal& level_zero_lit,
+                                 std::vector<Literal> *implication);
+
+
  private:
     const unsigned int _permutation_index;
     const Assignment& _assignment;

@@ -47,6 +47,10 @@ public:
     Solver();
     virtual ~Solver();
 
+    CRef SPFSPropagateSymmetric();
+    void sortSymmetricalClause(vec<Lit>& clause);
+
+    bool hasLowerLevel(Lit first, Lit second) { return level(var(first)) < level(var(second)); }
 
     void computeVSIDS(std::vector<Lit> *order);
     void printClause(CRef cr, bool colored = false);

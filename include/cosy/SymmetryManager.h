@@ -42,6 +42,9 @@ class SymmetryManager {
     void generateSymmetricClause(const std::vector<Literal>& reason,
                                  std::vector<Literal> *implication);
 
+    void generateSymmetricClause(const Literal& level_zero_lit,
+                                 std::vector<Literal> *implication);
+
     // void searchLexLeaderForcing(Literal literal);
 
     // bool canForceLexLeader(Literal literal) const;
