@@ -21,6 +21,8 @@ class Orbits {
         Orbits() {}
         ~Orbits() {}
 
+        void compute(const std::vector<Permutation*>& perms);
+
         void compute(const std::vector<std::unique_ptr<Permutation>>& perms);
         uint64_t numOrbits() const;
         void printOrbits() const;
@@ -35,6 +37,9 @@ class Orbits {
 inline void
 Orbits::compute(const std::vector<std::unique_ptr<Permutation>>& perms) {
     DisjointSets disjoint_sets;
+
+    _orbits.clear();
+    _symmetrics.clear();
 
     for (const std::unique_ptr<Permutation>& permutation : perms) {
         for (int c = 0; c < permutation->numCycles(); ++c) {
@@ -60,6 +65,39 @@ Orbits::compute(const std::vector<std::unique_ptr<Permutation>>& perms) {
         _orbits[representant].push_back(var);
     }
 }
+
+inline void
+Orbits::compute(const std::vector<Permutation*>& perms) {
+    DisjointSets disjoint_sets;
+
+    _orbits.clear();
+    _symmetrics.clear();
+
+    for (const Permutation* permutation : perms) {
+        for (int c = 0; c < permutation->numCycles(); ++c) {
+            Lit element = permutation->lastElementInCycle(c);
+            Var v_element = varOf(element);
+
+            disjoint_sets.Add(v_element);
+            for (const Lit image : permutation->cycle(c)) {
+                Var v_image = varOf(image);
+
+                _symmetrics.insert(v_element);
+
+                disjoint_sets.Add(v_image);
+                disjoint_sets.Union(v_element, v_image);
+                element = image;
+                v_element = varOf(element);
+            }
+        }
+    }
+
+    for (const Var& var : _symmetrics) {
+        const Var representant = disjoint_sets.Find(var);
+        _orbits[representant].push_back(var);
+    }
+}
+
 
 
 inline uint64_t Orbits::numOrbits() const { return _orbits.size(); }

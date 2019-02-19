@@ -38,7 +38,7 @@ class SymmetryController {
 
         bool isUnitsLit();
         T unitLit();
-        
+
         bool isNotLexLeader(T propagated);
         std::vector<T>generateEsbp();
 
@@ -117,7 +117,7 @@ inline void SymmetryController<T>::order(const std::vector<T>& order,
 
 template<class T>
 inline void SymmetryController<T>::order(OrderType order, LexType lex) {
-    _order_manager->generate(order);
+    _order_manager->generate(order, _manager->permutations());
     _manager->order(_order_manager->order(), lex);
 }
 

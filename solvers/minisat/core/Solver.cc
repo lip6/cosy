@@ -803,13 +803,13 @@ lbool Solver::solve_()
     // Set symmetry order
     if (symmetry != nullptr) {
 	// symmetry->activateLexLeaderForcing();
-        symmetry->order(cosy::OrderType::OCCURENCE, cosy::T_LESS_F);
+        symmetry->order(cosy::OrderType::BREAKID, cosy::T_LESS_F);
         symmetry->printInfo();
 
 	while (symmetry->isUnitsLit()) {
 	    Lit l = symmetry->unitLit();
-	    std::cout << "UNIT " << (sign(l)?"-":"") << var(l) << std::endl;
-	    uncheckedEnqueue(l);
+            if (value(l) == l_Undef)
+                uncheckedEnqueue(l);
 	}
     }
     solves++;

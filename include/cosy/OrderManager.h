@@ -3,12 +3,16 @@
 #ifndef INCLUDE_DSB_ORDERMANAGER_H_
 #define INCLUDE_DSB_ORDERMANAGER_H_
 
+#include <memory>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 
 #include "cosy/Types.h"
+#include "cosy/Permutation.h"
+#include "cosy/Orbits.h"
 
 namespace cosy {
 
@@ -19,61 +23,67 @@ enum OrderType {
     OCCURENCE,
     CLASS_INCREASING,
     CLASS_OCCURENCE,
+    BREAKID,
     CUSTOM
 };
 
 template<typename T>
 struct ValueOrderLt {
-        const std::vector<T>& values;
-        bool operator() (unsigned int i, unsigned int j) {
-            if (values[i] == values[j])
-                return i < j;
-            return values[i] > values[j];
-        }
-        explicit ValueOrderLt(const std::vector<T>& v) : values(v) {}
+    const std::vector<T>& values;
+    bool operator() (unsigned int i, unsigned int j) {
+        if (values[i] == values[j])
+            return i < j;
+        return values[i] > values[j];
+    }
+    explicit ValueOrderLt(const std::vector<T>& v) : values(v) {}
 };
 
 class OrderManager {
  public:
-        explicit OrderManager(const unsigned int num_vars) :
-            _num_vars(num_vars),
-            _type(UNKNOWN) {}
-        ~OrderManager() {}
+    explicit OrderManager(const unsigned int num_vars) :
+        _num_vars(num_vars),
+        _type(UNKNOWN) {}
+    ~OrderManager() {}
 
-        void generate(OrderType type);
-        void custom(const std::vector<Lit>& order) {
-            _type = CUSTOM;
-            _order = order;
-        }
+    void generate(OrderType type,
+                  const std::vector<std::unique_ptr<Permutation>>& G);
+    void custom(const std::vector<Lit>& order) {
+        _type = CUSTOM;
+        _order = order;
+    }
 
-        const std::vector<Lit>& order() const { return _order; }
-        const std::string orderString() const;
+    const std::vector<Lit>& order() const { return _order; }
+    const std::string orderString() const;
 
-        // We make a copy one time it's acceptable
-        std::vector< std::vector<Var> >&orbits() { return _orbits; }
-        std::vector<int>& occurences() { return _occurences; }
+    // We make a copy one time it's acceptable
+    std::vector< std::vector<Var> >&orbits() { return _orbits; }
+    std::vector<int>& occurences() { return _occurences; }
 
  private:
-        const unsigned int _num_vars;
-        OrderType _type;
-        std::vector<Lit> _order;
-        std::vector< std::vector<Var> > _orbits;
-        std::vector<int> _occurences;
+    const unsigned int _num_vars;
+    OrderType _type;
+    std::vector<Lit> _order;
+    std::vector< std::vector<Var> > _orbits;
+    std::vector<int> _occurences;
 
-        void increase_order();
-        void decrease_order();
-        void occurence_order();
-        void class_increase_order();
-        void class_occurence_order();
+    void increase_order();
+    void decrease_order();
+    void occurence_order();
+    void class_increase_order();
+    void class_occurence_order();
+    void breakid_order(const std::vector<std::unique_ptr<Permutation>>& G);
 };
 
-inline void OrderManager::generate(OrderType type) {
+inline void
+OrderManager::generate(OrderType type,
+                       const std::vector<std::unique_ptr<Permutation>>& G) {
     switch (type) {
     case INCREASING: return increase_order();
     case DECREASING: return decrease_order();
     case OCCURENCE:  return occurence_order();
     case CLASS_INCREASING: return class_increase_order();
     case CLASS_OCCURENCE: return class_occurence_order();
+    case BREAKID: return breakid_order(G);
     default:
         assert(false);
     }
@@ -88,6 +98,8 @@ inline const std::string OrderManager::orderString() const {
     case CLASS_INCREASING: return std::string("class increase");
     case CLASS_OCCURENCE:  return std::string("class occurence");
     case CUSTOM:           return std::string("custom");
+    case BREAKID:           return std::string("breakid");
+
     default: assert(false);
     }
     return "";
@@ -172,6 +184,82 @@ inline void OrderManager::class_occurence_order() {
         for (const Var& var : orbit)
             _order.push_back(negate(var));
     }
+}
+
+
+inline void
+OrderManager::breakid_order(const std::vector<std::unique_ptr<Permutation>>& G) {
+    _type = BREAKID;
+
+    std::vector<Permutation*> Q, filter;
+    std::unordered_map<Var, int> occurence_generators;
+    unsigned int largestOrbit;
+    Var next = VAR_UNDEF;
+    Orbits orbits;
+
+    std::vector<Var> ord;
+
+    for (const std::unique_ptr<Permutation>& perm : G)
+        Q.push_back(perm.get());
+
+    while (Q.size() > 0) {
+        // Compute occurence in remain generators
+        occurence_generators.clear();
+        for (const Permutation* permutation : Q) {
+            for (const Lit& literal : permutation->support())
+                if (!sign(literal))
+                    occurence_generators[varOf(literal)]++;
+        }
+        occurence_generators[VAR_UNDEF] = std::numeric_limits<int>::max();
+
+        orbits.compute(Q);
+
+        largestOrbit = 0;
+        next = VAR_UNDEF;
+
+        for (const std::vector<Var>& orbit : orbits.orbits()) {
+            if (orbit.size() < largestOrbit)
+                continue;
+            for (const Var variable : orbit) {
+                if (occurence_generators[variable] == 0)
+                    continue;
+                const int occ_v = occurence_generators[variable];
+                const int occ_n = occurence_generators[next];
+                if (next == VAR_UNDEF ||
+                    occ_v < occ_n || (occ_v == occ_n && variable < next)) {
+                    next = variable;
+                    largestOrbit = orbit.size();
+                }
+            }
+        }
+        if (next == VAR_UNDEF) {
+            std::cout << "Problem with generators ??";
+            break;
+        }
+
+        ord.push_back(next);
+
+        filter.clear();
+        const Lit next_literal = createLiteral(next, false);
+        for (Permutation* p : Q) {
+            if (std::find(std::begin(p->support()),
+                          std::end(p->support()),
+                          next_literal) == std::end(p->support()))
+                filter.push_back(p);
+        }
+
+        Q = filter;
+    }
+
+
+    for (int i = 1; i <= static_cast<int>(_num_vars); i++)
+        if (std::find(std::begin(ord), std::end(ord), i) == std::end(ord))
+            ord.push_back(i);
+
+    for (Var v : ord)
+        _order.push_back(v);
+    for (Var v : ord)
+        _order.push_back(negate(v));
 }
 
 }  // namespace cosy
