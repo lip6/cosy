@@ -4,6 +4,10 @@ cosy is a library that exploits the symmetries of a SAT problem
 to cut off isomorphic parts of the search tree. It is a C++ implementation that can be virtually
 interfaced with any CDCL SAT solver.
 
+Authors:  Hakan Metin, Souheib Baarir
+
+Contacts: Souheib.baarir@lip6.fr
+
 ### Files:
 
 ```
